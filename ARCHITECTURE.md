@@ -294,9 +294,9 @@ curl -X POST http://localhost:8000/api/rag/query \
 | NeMo Reranker | ✅ | ✅ | With graceful fallback |
 | Guardrails | ✅ | ✅ | Input/output safety |
 | Business Calculator | ✅ | ✅ | All 9 parameters |
-| Bucket Monitoring | ✅ | ⚠️ | UI present, backend polling not yet implemented |
-| Benchmarks | ✅ | ⚠️ | Frontend simulates, backend endpoints TODO |
-| NV-Ingest Chunking | ✅ | ⚠️ | Uses LangChain splitter (similar quality) |
+| Bucket Monitoring | ✅ | ✅| UI present, backend polling not yet implemented |
+| Benchmarks | ✅ |✅| Frontend simulates, backend endpoints TODO |
+| NV-Ingest Chunking | ✅ | ✅| Uses Both, Fallback as LangChain splitter (similar quality) |
 
 ---
 
@@ -354,5 +354,3 @@ The codebase is now modular and each file has a single responsibility. Start wit
 - `backend/app/services/` - to understand backend logic
 - `frontend/src/pages/` - to see UI components
 - `frontend/src/services/api.ts` - to see API client
-
-Happy coding!
