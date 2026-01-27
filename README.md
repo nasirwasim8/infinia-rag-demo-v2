@@ -113,7 +113,7 @@ Build.RAG/
 └── README.md
 ```
 
-## 🎨 Available LLM Models
+## Available LLM Models
 
 ### Fast Models (~10-15s per query)
 - `meta/llama-3.1-8b-instruct` (default)
@@ -156,8 +156,7 @@ Interactive API documentation available at:
 
 ### Storage Layer
 - **DDN INFINIA**: Primary storage with sub-second retrieval
-- **AWS S3**: Optional comparison storage (or simulated)
-- **Sampling Strategy**: 1-chunk sampling for fast AWS measurement
+- **AWS S3**: Optional comparison storage (or simulated) if not configured
 
 ### AI/ML Layer
 - **Embeddings**: Sentence Transformers
