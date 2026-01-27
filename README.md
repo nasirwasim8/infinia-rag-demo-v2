@@ -7,19 +7,9 @@ A high-performance Retrieval-Augmented Generation (RAG) system showcasing DDN IN
 - **Fast Storage Comparison**: Real-time performance metrics comparing DDN INFINIA vs AWS S3
 - **NVIDIA NIM Integration**: LLM, Reranking, and Guardrails powered by NVIDIA
 - **Optimized Performance**: 
-  - Sample-based AWS measurement (5x faster)
-  - Multiple fast LLM models (3x faster queries)
-  - Sub-second perceived latency
 - **Beautiful UI**: Modern React frontend with real-time metrics visualization
 - **Continuous Ingestion**: Automatic S3 bucket monitoring and document processing
 
-## 📊 Performance Improvements
-
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| AWS Measurement | 535ms | 107ms | **5x faster** |
-| Query Time (default) | 40s | 10-15s | **3x faster** |
-| Perceived Latency | 40s | <1s | **40x faster** (with streaming) |
 
 ## 🚀 Quick Start
 
