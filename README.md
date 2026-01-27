@@ -176,10 +176,6 @@ Interactive API documentation available at:
 
 Contributions welcome! Please open an issue or submit a pull request.
 
-## 📄 License
-
-[Your License Here]
-
 ## 💡 Support
 
 For questions or issues, please contact [your-contact-info].
