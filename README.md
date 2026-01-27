@@ -2,7 +2,7 @@
 
 A high-performance Retrieval-Augmented Generation (RAG) system showcasing DDN INFINIA's storage performance compared to AWS S3, powered by NVIDIA NIM APIs.
 
-## 🎯 Features
+## Features
 
 - **Fast Storage Comparison**: Real-time performance metrics comparing DDN INFINIA vs AWS S3
 - **NVIDIA NIM Integration**: LLM, Reranking, and Guardrails powered by NVIDIA
@@ -11,7 +11,7 @@ A high-performance Retrieval-Augmented Generation (RAG) system showcasing DDN IN
 - **Continuous Ingestion**: Automatic S3 bucket monitoring and document processing
 
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
