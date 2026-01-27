@@ -1,0 +1,265 @@
+import axios from 'axios'
+
+const axiosInstance = axios.create({
+  baseURL: '/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
+// Types
+export interface StorageConfig {
+  access_key: string
+  secret_key: string
+  bucket_name: string
+  region: string
+  endpoint_url?: string
+}
+
+export interface QueryRequest {
+  query: string
+  model?: string
+  top_k?: number
+  use_reranking?: boolean
+  use_guardrails?: boolean
+}
+
+export interface QueryResponse {
+  success: boolean
+  query: string
+  response: string
+  model_used: string
+  retrieved_chunks: Array<{
+    content: string
+    distance: number
+    metadata: Record<string, unknown>
+    rerank_score?: number
+  }>
+
+  // NEW: Separate TTFB and total query time metrics
+  storage_ttfb?: Record<string, number>  // Pure storage download time (ms)
+  total_query_time?: Record<string, number>  // Full query time including LLM (ms)
+
+  // DEPRECATED: Legacy field (now contains dict structures)
+  provider_times: Record<string, any>
+
+  fastest_provider: string | null
+  ttfb_improvement: Record<string, unknown>
+  total_time_ms: number
+  aws_simulated?: boolean
+  simulation_note?: string
+}
+
+export interface HealthResponse {
+  status: string
+  nvidia_configured: boolean
+  aws_configured: boolean
+  ddn_configured: boolean
+  vector_store_chunks: number
+  embedding_model: string
+  gpu_available: boolean
+  gpu_device: string
+  gpu_count: number
+  gpu_names: string[]
+  cuda_version: string
+}
+
+export interface MetricsResponse {
+  storage: Record<string, unknown>
+  retrieval: Record<string, unknown>
+  total_operations: number
+  ddn_wins?: number
+  aws_wins?: number
+  storage_summary?: {
+    ddn_avg_ttfb?: number
+    aws_avg_ttfb?: number
+    aws_simulated?: boolean
+    total_comparisons?: number
+    ddn_infinia_wins?: number
+    ddn_infinia_win_rate?: number
+    provider_stats?: {
+      ddn_infinia?: {
+        total_operations: number
+        total_time: number
+        wins: number
+        avg_time: number
+      }
+      aws?: {
+        total_operations: number
+        total_time: number
+        wins: number
+        avg_time: number
+      }
+    }
+  }
+  retrieval_summary?: {
+    ddn_avg_ttfb?: number
+    aws_avg_ttfb?: number
+    improvement_percent?: number
+    aws_simulated?: boolean
+  }
+}
+
+export interface ConnectionTestResponse {
+  provider: string
+  success: boolean
+  message: string
+  latency_ms?: number
+}
+
+export interface DocumentUploadResponse {
+  success: boolean
+  message: string
+  filename: string
+  total_chunks: number
+  provider_performance: Record<string, unknown>
+  aws_simulated?: boolean
+  simulation_note?: string
+}
+
+// API Object for easier usage
+export const api = {
+  // Health
+  getHealth: async (): Promise<HealthResponse> => {
+    const response = await axiosInstance.get<HealthResponse>('/health')
+    return response.data
+  },
+
+  // Configuration
+  configureAWS: async (config: StorageConfig) => {
+    const response = await axiosInstance.post('/config/aws', config)
+    return response.data
+  },
+
+  configureDDN: async (config: StorageConfig & { endpoint_url: string }) => {
+    const response = await axiosInstance.post('/config/ddn', config)
+    return response.data
+  },
+
+  testConnection: async (provider: 'aws' | 'ddn_infinia'): Promise<ConnectionTestResponse> => {
+    const response = await axiosInstance.get<ConnectionTestResponse>(`/config/test/${provider}`)
+    return response.data
+  },
+
+  getCurrentConfig: async () => {
+    const response = await axiosInstance.get('/config/current')
+    return response.data
+  },
+
+  resetConfiguration: async (provider: 'aws' | 'ddn_infinia' | 'all') => {
+    const response = await axiosInstance.delete(`/config/reset/${provider}`)
+    return response.data
+  },
+
+  // Documents
+  uploadDocument: async (formData: FormData): Promise<DocumentUploadResponse> => {
+    const response = await axiosInstance.post<DocumentUploadResponse>('/documents/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
+
+  uploadMultipleDocuments: async (files: File[]) => {
+    const formData = new FormData()
+    files.forEach((file) => formData.append('files', file))
+    const response = await axiosInstance.post('/documents/upload-multiple', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
+
+  clearDocuments: async () => {
+    const response = await axiosInstance.delete('/documents/clear')
+    return response.data
+  },
+
+  getDocumentCount: async (): Promise<{ total_chunks: number }> => {
+    const response = await axiosInstance.get<{ total_chunks: number }>('/documents/count')
+    return response.data
+  },
+
+  // RAG
+  query: async (request: QueryRequest): Promise<QueryResponse> => {
+    const response = await axiosInstance.post<QueryResponse>('/rag/query', request)
+    return response.data
+  },
+
+  getAvailableModels: async (): Promise<{ models: string[] }> => {
+    const response = await axiosInstance.get<{ models: string[] }>('/rag/models')
+    return response.data
+  },
+
+  // Metrics
+  getMetrics: async (): Promise<MetricsResponse> => {
+    const response = await axiosInstance.get<MetricsResponse>('/metrics')
+    return response.data
+  },
+
+  getStorageMetrics: async () => {
+    const response = await axiosInstance.get('/metrics/storage')
+    return response.data
+  },
+
+  getRetrievalMetrics: async () => {
+    const response = await axiosInstance.get('/metrics/retrieval')
+    return response.data
+  },
+
+  clearMetrics: async () => {
+    const response = await axiosInstance.delete('/metrics/clear')
+    return response.data
+  },
+
+  // Continuous Ingestion
+  startMonitoring: async (bucketName: string) => {
+    const response = await axiosInstance.post('/ingestion/start', null, {
+      params: { bucket_name: bucketName }
+    })
+    return response.data
+  },
+
+  stopMonitoring: async () => {
+    const response = await axiosInstance.post('/ingestion/stop')
+    return response.data
+  },
+
+  getMonitoringStatus: async () => {
+    const response = await axiosInstance.get('/ingestion/status')
+    return response.data
+  },
+
+  getProcessedFiles: async () => {
+    const response = await axiosInstance.get('/ingestion/processed-files')
+    return response.data
+  },
+}
+
+// Legacy exports for backward compatibility
+export const getHealth = () => axiosInstance.get<HealthResponse>('/health')
+export const configureAWS = (config: StorageConfig) => axiosInstance.post('/config/aws', config)
+export const configureDDN = (config: StorageConfig & { endpoint_url: string }) => axiosInstance.post('/config/ddn', config)
+export const testConnection = (provider: 'aws' | 'ddn_infinia') => axiosInstance.get(`/config/test/${provider}`)
+export const uploadDocument = (file: File) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return axiosInstance.post('/documents/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+export const uploadMultipleDocuments = (files: File[]) => {
+  const formData = new FormData()
+  files.forEach((file) => formData.append('files', file))
+  return axiosInstance.post('/documents/upload-multiple', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+export const clearDocuments = () => axiosInstance.delete('/documents/clear')
+export const getDocumentCount = () => axiosInstance.get<{ total_chunks: number }>('/documents/count')
+export const queryRAG = (request: QueryRequest) => axiosInstance.post<QueryResponse>('/rag/query', request)
+export const getAvailableModels = () => axiosInstance.get<{ models: string[] }>('/rag/models')
+export const getMetrics = () => axiosInstance.get<MetricsResponse>('/metrics')
+export const getStorageMetrics = () => axiosInstance.get('/metrics/storage')
+export const getRetrievalMetrics = () => axiosInstance.get('/metrics/retrieval')
+export const clearMetrics = () => axiosInstance.delete('/metrics/clear')
+
+export default axiosInstance

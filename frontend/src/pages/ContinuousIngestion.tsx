@@ -1,0 +1,524 @@
+import { useState, useCallback, useEffect } from 'react'
+import { useDropzone } from 'react-dropzone'
+import { Upload, Play, Square, RefreshCw, Wifi, TestTube, Database, Loader2, CheckCircle, Server, Info, Zap } from 'lucide-react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { api } from '../services/api'
+
+export default function ContinuousIngestionPage() {
+  const [bucketName, setBucketName] = useState('')
+  const [targetBucket, setTargetBucket] = useState('')
+  const [monitoringStatus, setMonitoringStatus] = useState('Monitoring not started. Enter a bucket name and click Start.')
+  const [performanceMetrics, setPerformanceMetrics] = useState('Metrics will appear after processing...')
+  const [uploadStatus, setUploadStatus] = useState('')
+  const [isMonitoring, setIsMonitoring] = useState(false)
+  const [chartData, setChartData] = useState<any[]>([])
+  const [currentFile, setCurrentFile] = useState('')
+  const [awsSimulated, setAwsSimulated] = useState(false)
+
+  const { data: healthData } = useQuery({
+    queryKey: ['health'],
+    queryFn: api.getHealth,
+  })
+
+  // Fetch current configuration to get DDN INFINIA bucket name
+  const { data: configData } = useQuery({
+    queryKey: ['currentConfig'],
+    queryFn: api.getCurrentConfig,
+  })
+
+  // Initialize bucket name from config or localStorage
+  useEffect(() => {
+    // Priority: config > localStorage > empty
+    // ALWAYS use DDN config if available (ensures current config is respected)
+    if (configData?.ddn?.bucket_name && configData.ddn.configured) {
+      // Auto-populate from DDN INFINIA configuration
+      setBucketName(configData.ddn.bucket_name)
+      setTargetBucket(configData.ddn.bucket_name) // Also set target bucket
+      // Update localStorage to match current config
+      localStorage.setItem('continuous_ingestion_bucket', configData.ddn.bucket_name)
+    } else {
+      // Fall back to localStorage only if no DDN config
+      const savedBucket = localStorage.getItem('continuous_ingestion_bucket')
+      if (savedBucket) {
+        setBucketName(savedBucket)
+        setTargetBucket(savedBucket)
+      }
+    }
+  }, [configData])
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      return api.uploadDocument(formData)
+    },
+    onSuccess: (data) => {
+      setUploadStatus(`Successfully uploaded to bucket. ${data.total_chunks} chunks processed.`)
+    },
+    onError: (error: Error) => {
+      setUploadStatus(`Upload failed: ${error.message}`)
+    }
+  })
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0 && targetBucket) {
+      uploadMutation.mutate(acceptedFiles[0])
+    } else if (!targetBucket) {
+      setUploadStatus('Please enter a target bucket name first.')
+    }
+  }, [targetBucket, uploadMutation])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'application/pdf': ['.pdf'] },
+    maxFiles: 1
+  })
+
+  const startMonitoring = async () => {
+    if (!bucketName) {
+      setMonitoringStatus('Please enter a bucket name.')
+      return
+    }
+
+    // Save bucket name to localStorage
+    localStorage.setItem('continuous_ingestion_bucket', bucketName)
+
+    setMonitoringStatus('Starting monitoring...')
+    try {
+      const result = await api.startMonitoring(bucketName)
+      setIsMonitoring(true)
+      setMonitoringStatus(`${result.message}\nFiles in 'auto_ingest/' folder will be processed automatically.\n\nPolling every 5 seconds...`)
+    } catch (error: any) {
+      setMonitoringStatus(`Failed to start monitoring: ${error.response?.data?.detail || error.message}`)
+      setIsMonitoring(false)
+    }
+  }
+
+  const stopMonitoring = async () => {
+    setMonitoringStatus('Stopping monitoring...')
+    try {
+      const result = await api.stopMonitoring()
+      setIsMonitoring(false)
+      setMonitoringStatus(result.message)
+    } catch (error: any) {
+      setMonitoringStatus(`Failed to stop monitoring: ${error.response?.data?.detail || error.message}`)
+    }
+  }
+
+  // SSE connection for real-time updates
+  useEffect(() => {
+    if (!isMonitoring) {
+      setChartData([])
+      setCurrentFile('')
+      return
+    }
+
+    const eventSource = new EventSource('/api/ingestion/stream')
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+
+        if (data.error) {
+          console.error('SSE error:', data.error)
+          return
+        }
+
+        // Update current file
+        if (data.file) {
+          setCurrentFile(data.file)
+        }
+
+        // Update AWS simulation status
+        if (data.aws_simulated !== undefined) {
+          setAwsSimulated(data.aws_simulated)
+        }
+
+        // Add chunk data to chart
+        if (data.chunk_index && data.performance) {
+          const ddnTime = data.performance.ddn_infinia?.avg_time || 0
+          const awsTime = data.performance.aws?.avg_time || 0
+
+          setChartData(prev => [
+            ...prev.slice(-20), // Keep last 20 data points
+            {
+              chunk: `Chunk ${data.chunk_index}/${data.total_chunks}`,
+              ddn: ddnTime * 1000, // Convert to ms
+              aws: awsTime * 1000,
+              progress: data.progress
+            }
+          ])
+        }
+
+        // Handle completion
+        if (data.status === 'completed') {
+          setMonitoringStatus(prev =>
+            prev + `\n✅ Completed: ${data.file} (${data.chunks_added} chunks)`
+          )
+        }
+      } catch (err) {
+        console.error('Failed to parse SSE data:', err)
+      }
+    }
+
+    eventSource.onerror = () => {
+      console.error('SSE connection error')
+      // Don't close monitoring automatically, just log the error
+    }
+
+    return () => {
+      eventSource.close()
+    }
+  }, [isMonitoring])
+
+  const getStatus = async () => {
+    setMonitoringStatus('Fetching status...')
+    try {
+      const status = await api.getMonitoringStatus()
+      if (status.monitoring) {
+        const lastCheck = status.last_check ? new Date(status.last_check).toLocaleTimeString() : 'N/A'
+        const filesText = status.processed_files.length > 0
+          ? status.processed_files.map((f: string) => `  • ${f.split('/').pop()}`).join('\n')
+          : '  None yet'
+
+        setMonitoringStatus(
+          `✅ Monitoring active on bucket: ${status.bucket_name}\n` +
+          `\nProcessed files: ${status.processed_files_count}\n` +
+          filesText +
+          `\n\nLast check: ${lastCheck}`
+        )
+        setIsMonitoring(true)
+      } else {
+        setMonitoringStatus('Monitoring is not active.')
+        setIsMonitoring(false)
+      }
+    } catch (error: any) {
+      setMonitoringStatus(`Failed to get status: ${error.response?.data?.detail || error.message}`)
+    }
+  }
+
+  const testConnection = async () => {
+    if (!bucketName) {
+      setMonitoringStatus('Please enter a bucket name.')
+      return
+    }
+    setMonitoringStatus(`Testing connection to ${bucketName}...`)
+    try {
+      const result = await api.testConnection('ddn_infinia')
+      if (result.success) {
+        setMonitoringStatus(`Connection successful!\nBucket: ${bucketName}\nLatency: ${result.latency_ms?.toFixed(2)}ms`)
+      } else {
+        setMonitoringStatus(`Connection failed: ${result.message}`)
+      }
+    } catch (error) {
+      setMonitoringStatus(`Connection test failed: ${error}`)
+    }
+  }
+
+  const refreshMetrics = async () => {
+    try {
+      const metrics = await api.getMetrics()
+      const ddnWins = metrics.ddn_wins || 0
+      const awsWins = metrics.aws_wins || 0
+      const total = ddnWins + awsWins
+
+      setPerformanceMetrics(`
+Auto-Ingest Performance Summary
+================================
+Total Operations: ${total}
+DDN INFINIA Wins: ${ddnWins} (${total > 0 ? ((ddnWins / total) * 100).toFixed(1) : 0}%)
+AWS S3 Wins: ${awsWins} (${total > 0 ? ((awsWins / total) * 100).toFixed(1) : 0}%)
+
+Average TTFB:
+  DDN INFINIA: ${metrics.storage_summary?.ddn_avg_ttfb?.toFixed(2) || 'N/A'}ms
+  AWS S3: ${metrics.storage_summary?.aws_avg_ttfb?.toFixed(2) || 'N/A'}ms
+      `.trim())
+    } catch (error) {
+      setPerformanceMetrics(`Failed to fetch metrics: ${error}`)
+    }
+  }
+
+  const testRetrieval = async () => {
+    setMonitoringStatus('Testing retrieval from auto-ingested documents...')
+    try {
+      const result = await api.query({
+        query: 'Test retrieval from auto-ingested documents',
+        model: 'nvidia',
+        use_reranking: true,
+        use_guardrails: false,
+        top_k: 5
+      })
+      if (result.success) {
+        setMonitoringStatus(`Retrieval test successful!\nFound ${result.retrieved_chunks?.length || 0} relevant chunks.\nFastest provider: ${result.fastest_provider || 'N/A'}`)
+      } else {
+        setMonitoringStatus('No documents found. Upload some documents first.')
+      }
+    } catch (error) {
+      setMonitoringStatus(`Retrieval test failed: ${error}`)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Section Header */}
+      <div className="section-header">
+        <div className="flex items-center gap-3">
+          <h2 className="section-title">Continuous Ingestion</h2>
+          <span className={`badge ${isMonitoring ? 'badge-success' : 'badge-neutral'}`}>
+            <div className={`w-2 h-2 rounded-full ${isMonitoring ? 'bg-status-success animate-pulse' : 'bg-neutral-400'}`} />
+            {isMonitoring ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+        <p className="section-description">
+          Configure automatic document processing when files are uploaded to DDN INFINIA buckets.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Left Column - Bucket Monitoring */}
+        <div className="card-elevated p-6 space-y-5">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-ddn-red/10 flex items-center justify-center">
+              <Server className="w-4 h-4 text-ddn-red" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-neutral-900">Bucket Monitoring</h3>
+              <p className="text-xs text-neutral-500">Watch for new files automatically</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">
+              DDN INFINIA Bucket
+            </label>
+            <input
+              type="text"
+              value={bucketName}
+              onChange={(e) => setBucketName(e.target.value)}
+              placeholder="infinia-test-bucket-01"
+              className="input-field"
+            />
+            <p className="text-xs text-neutral-400 mt-2">
+              Files in 'auto_ingest/' folder will be processed automatically
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={startMonitoring}
+              disabled={isMonitoring || !bucketName}
+              className="btn-primary flex items-center gap-2"
+            >
+              <Play className="w-4 h-4" />
+              Start
+            </button>
+            <button
+              onClick={stopMonitoring}
+              disabled={!isMonitoring}
+              className="btn-secondary flex items-center gap-2 text-status-error hover:border-status-error/50"
+            >
+              <Square className="w-4 h-4" />
+              Stop
+            </button>
+            <button
+              onClick={getStatus}
+              className="btn-secondary flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Status
+            </button>
+          </div>
+
+          <div className="toolbar !p-0 gap-2">
+            <button
+              onClick={testConnection}
+              className="btn-secondary flex items-center gap-2 text-xs"
+            >
+              <Wifi className="w-3.5 h-3.5" />
+              Test
+            </button>
+            <button
+              onClick={refreshMetrics}
+              className="btn-secondary flex items-center gap-2 text-xs"
+            >
+              <Database className="w-3.5 h-3.5" />
+              Metrics
+            </button>
+            <button
+              onClick={testRetrieval}
+              className="btn-secondary flex items-center gap-2 text-xs"
+            >
+              <TestTube className="w-3.5 h-3.5" />
+              Retrieval
+            </button>
+          </div>
+
+          {/* Status Display */}
+          <div>
+            <div className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">Status</div>
+            <div className="output-block min-h-[100px]">
+              {monitoringStatus}
+            </div>
+          </div>
+
+          {/* Performance Metrics */}
+          <div>
+            <div className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">Performance</div>
+            <div className="output-block min-h-[120px]">
+              {performanceMetrics}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Manual Upload */}
+        <div className="card-elevated p-6 space-y-5">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-ddn-red/10 flex items-center justify-center">
+              <Upload className="w-4 h-4 text-ddn-red" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-neutral-900">Manual Upload</h3>
+              <p className="text-xs text-neutral-500">Upload documents directly</p>
+            </div>
+          </div>
+
+          <div
+            {...getRootProps()}
+            className={`dropzone ${isDragActive ? 'active' : ''}`}
+          >
+            <input {...getInputProps()} />
+            {uploadMutation.isPending ? (
+              <>
+                <Loader2 className="dropzone-icon text-ddn-red animate-spin" />
+                <p className="dropzone-text">Uploading...</p>
+              </>
+            ) : (
+              <>
+                <Upload className="dropzone-icon" />
+                <p className="dropzone-text">
+                  {isDragActive ? 'Drop the PDF here' : 'Drag & drop a PDF file here'}
+                </p>
+                <p className="dropzone-hint">or click to select</p>
+              </>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">
+              Target Bucket
+            </label>
+            <input
+              type="text"
+              value={targetBucket}
+              onChange={(e) => setTargetBucket(e.target.value)}
+              placeholder="infinia-test-bucket-01"
+              className="input-field"
+            />
+          </div>
+
+          <button
+            onClick={() => {
+              const input = document.createElement('input')
+              input.type = 'file'
+              input.accept = '.pdf'
+              input.onchange = (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0]
+                if (file) uploadMutation.mutate(file)
+              }
+              input.click()
+            }}
+            disabled={!targetBucket || uploadMutation.isPending}
+            className="w-full btn-primary flex items-center justify-center gap-2"
+          >
+            {uploadMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+            {uploadMutation.isPending ? 'Uploading...' : 'Upload to Bucket'}
+          </button>
+
+          {/* Upload Status */}
+          {uploadStatus && (
+            <div className="status-banner-success p-4">
+              <CheckCircle className="w-4 h-4" />
+              <p className="text-sm">{uploadStatus}</p>
+            </div>
+          )}
+
+          {/* Real-Time Performance Chart */}
+          <div className="card-inset p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                Real-Time Performance
+              </h3>
+              {currentFile && (
+                <span className="text-xs text-neutral-400">
+                  {currentFile}
+                </span>
+              )}
+            </div>
+
+            {/* AWS Simulation Disclaimer */}
+            {awsSimulated && (
+              <div className="alert alert-info mb-4">
+                <Info className="w-4 h-4" />
+                <span>
+                  <strong>AWS metrics simulated.</strong> Estimated 30-40x slower. Configure AWS for real data.
+                </span>
+              </div>
+            )}
+
+            {chartData.length > 0 ? (
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {chartData.slice(-10).map((point, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-neutral-500">{point.chunk}</span>
+                      <span className="text-neutral-400">{point.progress?.toFixed(0)}%</span>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-ddn-red font-medium">DDN</span>
+                          <span className="text-neutral-600">{point.ddn.toFixed(2)}ms</span>
+                        </div>
+                        <div className="h-2 bg-surface-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-ddn-red to-red-400 transition-all duration-300"
+                            style={{ width: `${Math.min((point.ddn / Math.max(point.ddn, point.aws)) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-neutral-600 font-medium">AWS</span>
+                          <span className="text-neutral-600">{point.aws.toFixed(2)}ms</span>
+                        </div>
+                        <div className="h-2 bg-surface-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-neutral-400 transition-all duration-300"
+                            style={{ width: `${Math.min((point.aws / Math.max(point.ddn, point.aws)) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-40 bg-surface-secondary rounded-xl flex items-center justify-center">
+                <div className="text-center">
+                  <Zap className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
+                  <p className="text-neutral-400 text-sm">
+                    {isMonitoring ? 'Waiting for files...' : 'Start monitoring to see live performance'}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div >
+      </div >
+    </div >
+  )
+}

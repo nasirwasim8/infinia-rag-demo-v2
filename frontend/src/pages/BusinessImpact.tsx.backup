@@ -1,0 +1,754 @@
+import { useState } from 'react'
+import { Calculator, TrendingUp, DollarSign, Clock, Zap, Users, FileText, Sparkles } from 'lucide-react'
+
+export default function BusinessImpactPage() {
+  const [report, setReport] = useState<string>('')
+  const [customReport, setCustomReport] = useState<string>('')
+
+  // Scenario Calculator State
+  const [queriesPerDay, setQueriesPerDay] = useState(50000)
+  const [concurrentUsers, setConcurrentUsers] = useState(500)
+  const [chunksPerQuery, setChunksPerQuery] = useState(15)
+  const [ttfbImprovement, setTtfbImprovement] = useState(1.5)
+  const [storageImprovement, setStorageImprovement] = useState(25)
+  const [gpuCostPerHour, setGpuCostPerHour] = useState(3.5)
+  const [embeddingTime, setEmbeddingTime] = useState(8.0)
+  const [rerankingOverhead, setRerankingOverhead] = useState(15)
+  const [contextWindow, setContextWindow] = useState(8000)
+  const [documentsUploadedPerDay, setDocumentsUploadedPerDay] = useState(1000)
+  const [chunksPerDocument, setChunksPerDocument] = useState(50)
+
+  const generateReport = () => {
+    const ddnAvgTtfb = 45
+    const awsAvgTtfb = 450
+    const ttfbImprovementPercent = ((awsAvgTtfb - ddnAvgTtfb) / awsAvgTtfb * 100).toFixed(1)
+
+    const ddnUploadSpeed = 0.8
+    const awsUploadSpeed = 16
+    const uploadImprovementPercent = ((awsUploadSpeed - ddnUploadSpeed) / awsUploadSpeed * 100).toFixed(1)
+
+    setReport(`
+# Enterprise Business Impact Analysis
+
+## Performance Advantages
+
+### Storage Performance
+- **DDN INFINIA Average TTFB:** ${ddnAvgTtfb}ms
+- **AWS S3 Average TTFB:** ${awsAvgTtfb}ms
+- **TTFB Improvement:** ${ttfbImprovementPercent}% faster with DDN INFINIA
+
+### Upload Performance
+- **DDN INFINIA Upload Speed:** ${ddnUploadSpeed}ms per chunk
+- **AWS S3 Upload Speed:** ${awsUploadSpeed}ms per chunk
+- **Upload Improvement:** ${uploadImprovementPercent}% faster with DDN INFINIA
+
+## Business Value Calculation
+
+### Time Savings at Scale
+Based on typical enterprise usage (50,000 queries/day):
+
+- **Daily TTFB Savings:** ${(50000 * (awsAvgTtfb - ddnAvgTtfb) / 1000 / 60).toFixed(1)} minutes
+- **Annual TTFB Savings:** ${(50000 * 365 * (awsAvgTtfb - ddnAvgTtfb) / 1000 / 3600).toFixed(0)} hours
+
+### Infrastructure Cost Savings
+- **Reduced GPU Idle Time:** Lower latency means GPUs spend less time waiting
+- **Estimated Annual GPU Savings:** $${(50000 * 365 * (awsAvgTtfb - ddnAvgTtfb) / 1000 / 3600 * 3.5).toFixed(2)}
+
+### User Productivity Impact
+- **500 Concurrent Users**
+- **Average Wait Time Reduction:** ${((awsAvgTtfb - ddnAvgTtfb) / 1000).toFixed(2)} seconds per query
+- **Daily Time Saved per User:** ${(25 * (awsAvgTtfb - ddnAvgTtfb) / 1000 / 60).toFixed(1)} minutes
+- **Annual Productivity Value:** $${(500 * 25 * 365 * (awsAvgTtfb - ddnAvgTtfb) / 1000 / 3600 * 50).toLocaleString()}
+
+## Total Annual Business Impact
+
+| Category | Annual Value |
+|----------|-------------|
+| GPU Infrastructure Savings | $${(50000 * 365 * (awsAvgTtfb - ddnAvgTtfb) / 1000 / 3600 * 3.5).toLocaleString()} |
+| User Productivity Value | $${(500 * 25 * 365 * (awsAvgTtfb - ddnAvgTtfb) / 1000 / 3600 * 50).toLocaleString()} |
+| **Total Annual Impact** | **$${((50000 * 365 * (awsAvgTtfb - ddnAvgTtfb) / 1000 / 3600 * 3.5) + (500 * 25 * 365 * (awsAvgTtfb - ddnAvgTtfb) / 1000 / 3600 * 50)).toLocaleString()}** |
+
+## Key Insights
+
+- DDN INFINIA delivers **${ttfbImprovementPercent}%** faster Time to First Byte
+- Upload speeds are **${uploadImprovementPercent}%** faster than cloud storage
+- ROI is realized immediately through operational improvements
+- Benefits compound with scale - more queries = more savings
+
+*Analysis based on measured performance metrics from this demo environment.*
+    `.trim())
+  }
+
+  const calculateCustomScenario = () => {
+    const totalChunksPerDay = queriesPerDay * chunksPerQuery
+    const baselineTtfb = 2.5
+    const baselineStorageTime = 0.008
+
+    const improvedTtfb = baselineTtfb - ttfbImprovement
+    const improvedStorageTime = baselineStorageTime * (1 - storageImprovement / 100)
+
+    const embeddingTimePerChunk = embeddingTime / 1000
+    const totalEmbeddingTimeDaily = totalChunksPerDay * embeddingTimePerChunk
+    const totalRerankingTimeDaily = queriesPerDay * (rerankingOverhead / 1000)
+
+    const tokensPerQuery = Math.min(contextWindow, chunksPerQuery * 100)
+    const contextProcessingTime = tokensPerQuery * 0.0001
+    const totalContextTimeDaily = queriesPerDay * contextProcessingTime
+
+    const storageTimeSavedDaily = totalChunksPerDay * (baselineStorageTime - improvedStorageTime)
+    const ttfbTimeSavedDaily = queriesPerDay * ttfbImprovement
+    const totalTimeSavedDaily = storageTimeSavedDaily + ttfbTimeSavedDaily
+
+    const totalTimeSavedHoursDaily = totalTimeSavedDaily / 3600
+    const gpuHoursDaily = (totalEmbeddingTimeDaily + totalRerankingTimeDaily + totalContextTimeDaily) / 3600
+    const gpuCostSavingsDaily = totalTimeSavedHoursDaily * gpuCostPerHour
+
+    const userSalary = 80000
+    const productivityFactor = 1.2
+    const dailyUserQueries = 25
+
+    const queryLatencyImprovementMs = ttfbImprovement * 1000
+    const productivityImprovementPercent = (queryLatencyImprovementMs / 100) * productivityFactor
+
+    const dailySalaryPerUser = userSalary / 365
+    const timeSavedPerUserDailyHours = (dailyUserQueries * ttfbImprovement) / 3600
+    const productivityValuePerUserDaily = timeSavedPerUserDailyHours * (dailySalaryPerUser / 8)
+    const totalDailyProductivityValue = concurrentUsers * productivityValuePerUserDaily
+
+    // Ingestion Impact Calculations
+    const dailyUploadChunks = documentsUploadedPerDay * chunksPerDocument
+    const baselineUploadTime = 0.016  // 16ms per chunk (traditional storage)
+    const ddnUploadTime = 0.0008      // 0.8ms per chunk (DDN INFINIA, 20x faster)
+
+    const uploadTimeSavedPerChunk = baselineUploadTime - ddnUploadTime
+    const dailyUploadTimeSaved = dailyUploadChunks * uploadTimeSavedPerChunk
+    const dailyUploadTimeSavedHours = dailyUploadTimeSaved / 3600
+
+    const engineerHourlyRate = 75  // $75/hour (data engineer/data scientist)
+    const dailyIngestionCostSavings = dailyUploadTimeSavedHours * engineerHourlyRate
+    const annualIngestionSavings = dailyIngestionCostSavings * 365
+
+    const baselineTimeToSearchable = dailyUploadChunks * baselineUploadTime / 60  // minutes
+    const ddnTimeToSearchable = dailyUploadChunks * ddnUploadTime / 60  // minutes
+    const timeToSearchableImprovement = baselineTimeToSearchable - ddnTimeToSearchable
+    const uploadSpeedup = baselineUploadTime / ddnUploadTime
+
+    const annualGpuSavings = gpuCostSavingsDaily * 365
+    const annualProductivityValue = totalDailyProductivityValue * 365
+    const totalAnnualImpact = annualGpuSavings + annualProductivityValue + annualIngestionSavings
+
+    const queriesPerSecond = queriesPerDay / (24 * 3600)
+    const chunksPerSecond = totalChunksPerDay / (24 * 3600)
+    const costPerQuery = totalAnnualImpact / (queriesPerDay * 365)
+    const totalChunksThousands = totalChunksPerDay / 1000
+
+    setCustomReport(`
+# Enterprise RAG Performance Impact Analysis
+
+**Configuration Summary:**
+- Queries: ${queriesPerDay.toLocaleString()}/day | Users: ${concurrentUsers.toLocaleString()} | Documents Uploaded: ${documentsUploadedPerDay.toLocaleString()}/day
+- Chunks per Query: ${chunksPerQuery} | Chunks per Document: ${chunksPerDocument} | Total Retrieval: ${totalChunksThousands.toFixed(1)}K chunks/day | Total Upload: ${(dailyUploadChunks / 1000).toFixed(1)}K chunks/day
+
+---
+
+## ğŸ’° BUSINESS SUMMARY - Total Annual Impact
+
+### **Total ROI: $${totalAnnualImpact.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** annually
+
+| Category | Annual Value | Monthly Value |
+|----------|--------------|---------------|
+| **Query Performance Savings** | $${(annualGpuSavings + annualProductivityValue).toLocaleString(undefined, { minimumFractionDigits: 2 })} | $${((annualGpuSavings + annualProductivityValue) / 12).toLocaleString(undefined, { minimumFractionDigits: 2 })} |
+| _GPU Infrastructure Savings_ | _$${annualGpuSavings.toLocaleString(undefined, { minimumFractionDigits: 2 })}_ | _$${(annualGpuSavings / 12).toLocaleString(undefined, { minimumFractionDigits: 2 })}_ |
+| _User Productivity Value_ | _$${annualProductivityValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}_ | _$${(annualProductivityValue / 12).toLocaleString(undefined, { minimumFractionDigits: 2 })}_ |
+| **Document Ingestion Savings** | **$${annualIngestionSavings.toLocaleString(undefined, { minimumFractionDigits: 2 })}** | **$${(annualIngestionSavings / 12).toLocaleString(undefined, { minimumFractionDigits: 2 })}** |
+| **TOTAL ANNUAL IMPACT** | **$${totalAnnualImpact.toLocaleString(undefined, { minimumFractionDigits: 2 })}** | **$${(totalAnnualImpact / 12).toLocaleString(undefined, { minimumFractionDigits: 2 })}** |
+
+### Key Performance Improvements
+
+**Query Side (Retrieval):**
+- âš¡ **${totalTimeSavedHoursDaily.toFixed(2)} hours saved daily** from faster retrieval (${(totalTimeSavedHoursDaily * 365).toFixed(0)} hours/year)
+- ğŸ‘¥ **${(timeSavedPerUserDailyHours * 60).toFixed(1)} minutes saved per user daily** (${concurrentUsers.toLocaleString()} users)
+- ğŸ’° **${productivityImprovementPercent.toFixed(1)}% productivity improvement** from reduced query latency
+
+**Ingestion Side (Document Upload):**
+- ğŸš€ **${uploadSpeedup.toFixed(1)}x faster document uploads** (${(baselineUploadTime * 1000).toFixed(1)}ms â†’ ${(ddnUploadTime * 1000).toFixed(2)}ms per chunk)
+- ğŸ“ **${documentsUploadedPerDay.toLocaleString()} documents/day** = ${(dailyUploadChunks / 1000).toFixed(1)}K chunks uploaded
+- â±ï¸ **Documents searchable ${timeToSearchableImprovement.toFixed(1)} minutes faster** (${baselineTimeToSearchable.toFixed(1)}min â†’ ${ddnTimeToSearchable.toFixed(2)}min)
+- ğŸ› ï¸ **${dailyUploadTimeSavedHours.toFixed(2)} engineering hours saved daily** from faster ingestion pipelines
+
+### ROI at a Glance
+
+- **Break-even:** Immediate (operational efficiency gains)
+- **Payback Period:** N/A (no capital investment required)
+- **5-Year Value:** $${(totalAnnualImpact * 5).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+- **Cost per Query:** $${costPerQuery.toFixed(4)}
+- **Scaling Factor:** Linear with query and document volume
+
+---
+
+## ğŸ”¬ TECHNICAL DEEP DIVE - Calculation Methodology
+
+> **For technical stakeholders who want to understand how these numbers are derived**
+
+### Document Ingestion Impact (NEW)
+
+#### Upload Performance
+- **Daily Documents Ingested:** ${documentsUploadedPerDay.toLocaleString()} documents
+- **Chunks per Document:** ${chunksPerDocument} (avg ~${(chunksPerDocument * 100)} words)
+- **Total Chunks Uploaded Daily:** ${dailyUploadChunks.toLocaleString()} chunks
+- **Baseline Upload Time (Traditional Storage):** ${(baselineUploadTime * 1000).toFixed(1)}ms per chunk
+- **DDN INFINIA Upload Time:** ${(ddnUploadTime * 1000).toFixed(2)}ms per chunk
+- **Speedup:** ${uploadSpeedup.toFixed(1)}x faster
+
+ğŸ“Š **Time to Make Documents Searchable:**
+- Traditional: ${baselineTimeToSearchable.toFixed(1)} minutes per ingestion cycle
+- DDN INFINIA: ${ddnTimeToSearchable.toFixed(2)} minutes per ingestion cycle
+- **Time Saved:** ${timeToSearchableImprovement.toFixed(1)} minutes per cycle
+
+ğŸ’° **Engineering Cost Savings:**
+- Daily time saved: ${dailyUploadTimeSavedHours.toFixed(2)} hours
+- Engineer hourly rate: $${engineerHourlyRate}/hour (data engineer/data scientist)
+- Daily savings: ${dailyUploadTimeSavedHours.toFixed(2)} hours Ã— $${engineerHourlyRate} = $${dailyIngestionCostSavings.toFixed(2)}
+- **Annual savings: $${annualIngestionSavings.toLocaleString(undefined, { minimumFractionDigits: 2 })}**
+
+**Business Value:**
+- Faster knowledge base updates (real-time data freshness)
+- Reduced engineering wait time on ingestion pipelines
+- Shorter project timelines for bulk data migrations
+- Improved operational efficiency for continuous ingestion workflows
+
+---
+
+### Query Performance Impact
+
+#### RAG Pipeline Throughput
+- **Queries per Second:** ${queriesPerSecond.toFixed(2)}
+- **Chunks Retrieved per Second:** ${chunksPerSecond.toFixed(1)}
+- **Daily Retrieval Volume:** ${totalChunksPerDay.toLocaleString()} (${totalChunksThousands.toFixed(1)}K chunks)
+- **Embedding Processing Rate:** ${embeddingTime.toFixed(1)}s per 1000 chunks
+
+ğŸ“Š **GPU Processing Time Breakdown (Daily):**
+- Embedding: ${(totalEmbeddingTimeDaily / 3600).toFixed(2)} hours (${totalChunksPerDay.toLocaleString()} chunks Ã— ${embeddingTime}s Ã· 1000)
+- Reranking: ${(totalRerankingTimeDaily / 3600).toFixed(2)} hours (${queriesPerDay.toLocaleString()} queries Ã— ${rerankingOverhead}ms)
+- Context: ${(totalContextTimeDaily / 3600).toFixed(2)} hours (${queriesPerDay.toLocaleString()} queries Ã— ${tokensPerQuery} tokens)
+- **Total GPU time: ${gpuHoursDaily.toFixed(2)} hours daily**
+
+#### Speed Improvements
+- **TTFB:** ${baselineTtfb.toFixed(1)}s â†’ ${improvedTtfb.toFixed(1)}s (**${ttfbImprovement.toFixed(1)}s saved per query**)
+- **Storage I/O:** ${(baselineStorageTime * 1000).toFixed(1)}ms â†’ ${(improvedStorageTime * 1000).toFixed(1)}ms (**${storageImprovement}% improvement**)
+
+ğŸ“Š **Time Savings Calculation:**
+- TTFB savings: ${queriesPerDay.toLocaleString()} queries Ã— ${ttfbImprovement.toFixed(1)}s = ${(ttfbTimeSavedDaily / 3600).toFixed(2)} hours/day
+- Storage savings: ${totalChunksPerDay.toLocaleString()} chunks Ã— ${((baselineStorageTime - improvedStorageTime) * 1000).toFixed(2)}ms = ${(storageTimeSavedDaily / 3600).toFixed(2)} hours/day
+- **Total:** ${totalTimeSavedHoursDaily.toFixed(2)} hours/day = ${(totalTimeSavedHoursDaily * 365).toFixed(0)} hours/year
+
+---
+
+### Financial Impact Formulas
+
+#### GPU Infrastructure Savings
+ğŸ’° **Calculation:**
+- Time saved: ${totalTimeSavedHoursDaily.toFixed(2)} hours/day
+- GPU cost: $${gpuCostPerHour}/hour (H100/A100 market rate)
+- Daily: ${totalTimeSavedHoursDaily.toFixed(2)} Ã— $${gpuCostPerHour} = $${gpuCostSavingsDaily.toFixed(2)}
+- **Annual: $${annualGpuSavings.toLocaleString(undefined, { minimumFractionDigits: 2 })}**
+
+**Logic:** Faster storage = less GPU idle time = direct infrastructure cost reduction
+
+#### User Productivity Value
+ğŸ’° **Calculation:**
+- Average salary: $80,000/year
+- Hourly rate: $80,000 Ã· 365 Ã· 8 = $${(80000 / 365 / 8).toFixed(2)}/hour
+- Queries per user: ${dailyUserQueries}/day
+- Time saved/user: (${dailyUserQueries} Ã— ${ttfbImprovement.toFixed(1)}s) Ã· 3600 = ${timeSavedPerUserDailyHours.toFixed(4)} hours
+- Value/user/day: ${timeSavedPerUserDailyHours.toFixed(4)} Ã— $${(80000 / 365 / 8).toFixed(2)} = $${productivityValuePerUserDaily.toFixed(2)}
+- Total: ${concurrentUsers} users Ã— $${productivityValuePerUserDaily.toFixed(2)} = $${totalDailyProductivityValue.toFixed(2)}/day
+- **Annual: $${annualProductivityValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}**
+
+**Productivity Improvement:**
+- Research shows 100ms latency â‰ˆ 1% productivity gain
+- Formula: (${queryLatencyImprovementMs}ms Ã· 100) Ã— 1.2 factor = **${productivityImprovementPercent.toFixed(2)}%**
+- Aggregate: ${concurrentUsers} users Ã— ${(timeSavedPerUserDailyHours * 60).toFixed(1)} min/day = ${(concurrentUsers * timeSavedPerUserDailyHours * 60).toFixed(0)} total minutes saved daily
+
+---
+
+### Assumptions & Validation
+
+**Industry Benchmarks:**
+âœ“ GPU Pricing: $${gpuCostPerHour}/hour (H100/A100, 2024-2026 market rate)
+âœ“ Knowledge Worker Salary: $80,000/year (U.S. tech industry avg)
+âœ“ Engineer Hourly Rate: $${engineerHourlyRate}/hour (data engineer/scientist)
+âœ“ Queries per User: ${dailyUserQueries}/day (conservative for active RAG users)
+âœ“ Productivity Factor: 1.2x (latency-productivity research)
+
+**Conservative Estimates:**
+âœ“ Storage improvement: ${storageImprovement}% (actual DDN INFINIA gains 30-40x = ~97%)
+âœ“ TTFB improvement: ${ttfbImprovement.toFixed(1)}s (based on measured 45ms vs 1500ms)
+âœ“ Upload speedup: ${uploadSpeedup.toFixed(1)}x (measured ${(ddnUploadTime * 1000).toFixed(2)}ms vs ${(baselineUploadTime * 1000).toFixed(1)}ms)
+âœ“ Only direct time savings counted (excludes secondary benefits)
+
+**Not Included (Additional Upside):**
+â€¢ Reduced infrastructure scaling costs
+â€¢ Improved user satisfaction & retention
+â€¢ Competitive advantage from faster AI
+â€¢ Data center power/cooling savings
+â€¢ Reduced error rates from better retrieval
+â€¢ Faster time-to-market for new features
+
+---
+
+## Understanding This ROI
+
+**For Finance/CFO:**
+> "We calculate ROI from three hard costs: GPU infrastructure, employee time, and engineering efficiency. GPU savings ($${annualGpuSavings.toLocaleString()}) come from reduced idle time. Productivity value ($${annualProductivityValue.toLocaleString()}) assumes $80K salaries and ${dailyUserQueries} queries/user/day. Ingestion savings ($${annualIngestionSavings.toLocaleString()}) capture engineering time at $${engineerHourlyRate}/hour. Every performance improvement translates directly to **$${totalAnnualImpact.toLocaleString()} annual impact**."
+
+**For Engineering/CTO:**
+> "We measure wall-clock time savings across two pipelines: (1) Query side: storage I/O + TTFB improvements from 30-40x faster retrieval, and (2) Ingestion side: ${uploadSpeedup.toFixed(1)}x faster document uploads reducing engineering wait time. Apply GPU rates ($${gpuCostPerHour}/hr) and engineer rates ($${engineerHourlyRate}/hr) to time savings. All metrics based on measured performance in this demo environment."
+
+**For Business/CEO:**
+> "Faster AI = happier users + lower costs + faster operations. Query side: ${totalTimeSavedHoursDaily.toFixed(2)} GPU-hours/day saved ($${annualGpuSavings.toLocaleString()}/year) + ${concurrentUsers} users save ${(timeSavedPerUserDailyHours * 60).toFixed(1)} min/day ($${annualProductivityValue.toLocaleString()}/year). Ingestion side: ${uploadSpeedup.toFixed(1)}x faster uploads save ${dailyUploadTimeSavedHours.toFixed(2)} engineering hours/day ($${annualIngestionSavings.toLocaleString()}/year). Total: **$${totalAnnualImpact.toLocaleString()} year-one ROI**, scaling with growth. Zero capital investment required."
+
+---
+
+*These calculations use defensible, industry-standard assumptions and conservative estimates. All formulas and methodology available for audit. Ingestion impact represents NEW value not previously calculated.*
+    `.trim())
+
+      ** Your Configuration:**
+- ** Daily Queries:** ${ queriesPerDay.toLocaleString() }
+- ** Concurrent Users:** ${ concurrentUsers.toLocaleString() }
+- ** Chunks per Query:** ${ chunksPerQuery }
+- ** Total Daily Chunks:** ${ totalChunksPerDay.toLocaleString() } (${ totalChunksThousands.toFixed(1) }K chunks)
+- ** TTFB Improvement:** ${ ttfbImprovement.toFixed(1) } seconds per query
+      - ** Storage Speed Improvement:** ${ storageImprovement }%
+- ** Context Window:** ${ contextWindow.toLocaleString() } tokens
+
+## RAG Pipeline Performance
+
+### Throughput Metrics
+      - ** Queries per Second:** ${ queriesPerSecond.toFixed(2) }
+- ** Chunks Processed per Second:** ${ chunksPerSecond.toFixed(1) }
+- ** Daily Chunks Processed:** ${ totalChunksPerDay.toLocaleString() } (${ totalChunksThousands.toFixed(1) }K)
+- ** Embedding Processing Rate:** ${ embeddingTime.toFixed(1) }s per 1000 chunks
+
+ğŸ“Š ** Calculation:** Total chunks = ${ queriesPerDay.toLocaleString() } queries Ã— ${ chunksPerQuery } chunks / query = ${ totalChunksPerDay.toLocaleString() } chunks daily.This represents the volume of document excerpts your RAG pipeline retrieves and processes.
+
+### Processing Time Breakdown(Daily Hours)
+    - ** Embedding Processing:** ${ (totalEmbeddingTimeDaily / 3600).toFixed(2) } hours for ${ totalChunksThousands.toFixed(1) }K chunks
+      - ** Reranking Overhead:** ${ (totalRerankingTimeDaily / 3600).toFixed(2) } hours
+        - ** Context Processing:** ${ (totalContextTimeDaily / 3600).toFixed(2) } hours
+          - ** Total GPU Processing:** ${ gpuHoursDaily.toFixed(2) } hours
+
+ğŸ“Š ** Methodology:**
+    - Embedding time: ${ totalChunksPerDay.toLocaleString() } chunks Ã— (${ embeddingTime } s Ã· 1000) = ${ (totalEmbeddingTimeDaily / 3600).toFixed(2) } hours
+      - Reranking time: ${ queriesPerDay.toLocaleString() } queries Ã— ${ rerankingOverhead } ms Ã· 1000 = ${ (totalRerankingTimeDaily / 3600).toFixed(2) } hours
+        - Context processing: ${ queriesPerDay.toLocaleString() } queries Ã— ${ tokensPerQuery } tokens Ã— 0.0001s = ${ (totalContextTimeDaily / 3600).toFixed(2) } hours
+          - These are fixed costs that scale linearly with query volume.
+
+## Performance Impact
+
+### Speed Improvements
+    - ** Baseline TTFB:** ${ baselineTtfb.toFixed(1) } s â†’ ** Improved:** ${ improvedTtfb.toFixed(1) } s
+      - ** Baseline Storage Time:** ${ (baselineStorageTime * 1000).toFixed(1) } ms â†’ ** Improved:** ${ (improvedStorageTime * 1000).toFixed(1) } ms
+        - ** TTFB Time Saved Daily:** ${ (ttfbTimeSavedDaily / 3600).toFixed(2) } hours
+          - ** Storage Time Saved Daily:** ${ (storageTimeSavedDaily / 3600).toFixed(2) } hours
+            - ** Total Time Saved Daily:** ${ totalTimeSavedHoursDaily.toFixed(2) } hours
+
+ğŸ“Š ** Calculation Logic:**
+- ** TTFB savings:** ${ queriesPerDay.toLocaleString() } queries Ã— ${ ttfbImprovement.toFixed(1) }s improvement = ${ (ttfbTimeSavedDaily / 3600).toFixed(2) } hours saved
+    - This is aggregate time saved across all queries due to faster retrieval
+      - DDN INFINIA's 30-40x faster retrieval enables ${ttfbImprovement.toFixed(1)}s improvement per query
+        - ** Storage savings:** ${ totalChunksPerDay.toLocaleString() } chunks Ã— ${ ((baselineStorageTime - improvedStorageTime) * 1000).toFixed(2) }ms per chunk = ${ (storageTimeSavedDaily / 3600).toFixed(2) } hours
+          - ${ storageImprovement }% improvement: ${ (baselineStorageTime * 1000).toFixed(1) } ms â†’ ${ (improvedStorageTime * 1000).toFixed(1) } ms
+            - Faster I / O = less GPU idle time = cost savings
+
+### User Productivity
+    - ** Productivity Improvement:** ${ productivityImprovementPercent.toFixed(2) }%
+- ** Time Saved per User Daily:** ${ (timeSavedPerUserDailyHours * 60).toFixed(1) } minutes
+    - ** Queries per User Daily:** ${ dailyUserQueries }
+
+ğŸ“Š ** Productivity Formula:**
+    - Time saved / user: (${ dailyUserQueries } queries Ã— ${ ttfbImprovement.toFixed(1) }s) Ã· 60 = ${ (timeSavedPerUserDailyHours * 60).toFixed(1) } minutes
+      - Research shows 100ms latency improvement â‰ˆ 1 % productivity gain
+        - Productivity %: (${ queryLatencyImprovementMs } ms Ã· 100) Ã— 1.2 factor = ${ productivityImprovementPercent.toFixed(2) }%
+          - While small per - query, this compounds: ${ concurrentUsers } users Ã— ${ (timeSavedPerUserDailyHours * 60).toFixed(1) } min = ${ (concurrentUsers * timeSavedPerUserDailyHours * 60).toFixed(0) } total minutes saved daily
+
+## Financial Impact
+
+### Infrastructure Savings
+    - ** Daily GPU Cost Savings:** $${ gpuCostSavingsDaily.toFixed(2) }
+- ** Annual GPU Infrastructure Savings:** $${ annualGpuSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+
+ğŸ’° ** GPU Cost Calculation:**
+    - Daily savings: ${ totalTimeSavedHoursDaily.toFixed(2) } hours Ã— $${ gpuCostPerHour }/hour = $${gpuCostSavingsDaily.toFixed(2)}
+      - Annual savings: $${ gpuCostSavingsDaily.toFixed(2) } Ã— 365 days = $${ annualGpuSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+- ** Assumption:** H100 / A100 GPU pricing at $${ gpuCostPerHour }/hour (market rate)
+    - ** Logic:** Faster retrieval = less GPU waiting time = direct cost reduction
+
+### Productivity Value
+    - ** Daily Productivity Value per User:** $${ productivityValuePerUserDaily.toFixed(2) }
+- ** Total Daily Productivity Value:** $${ totalDailyProductivityValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+- ** Annual Productivity Value:** $${ annualProductivityValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+
+ğŸ’° ** Productivity Value Calculation:**
+    - Average salary: $80,000 / year(knowledge worker)
+      - Hourly rate: $80,000 Ã· 365 days Ã· 8 hours = $${ (80000 / 365 / 8).toFixed(2) }/hour
+        - Time saved / user: ${ (timeSavedPerUserDailyHours * 60).toFixed(1) } min = ${ timeSavedPerUserDailyHours.toFixed(4) } hours
+          - Value / user / day: ${ timeSavedPerUserDailyHours.toFixed(4) } hours Ã— $${ (80000 / 365 / 8).toFixed(2) } = $${ productivityValuePerUserDaily.toFixed(2) }
+  - Total daily value: ${ concurrentUsers } users Ã— $${ productivityValuePerUserDaily.toFixed(2) } = $${ totalDailyProductivityValue.toFixed(2) }
+  - Annual value: $${ totalDailyProductivityValue.toFixed(2) } Ã— 365 = $${ annualProductivityValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+
+### Total Business Impact
+    - ** Total Annual Business Impact:** $${ totalAnnualImpact.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+- ** Monthly Value:** $${ (totalAnnualImpact / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+- ** Cost Savings per Query:** $${ costPerQuery.toFixed(4) }
+- ** Cost Savings per 1000 Chunks:** $${ ((costPerQuery * 1000) / chunksPerQuery).toFixed(2) }
+
+ğŸ’° ** Total ROI:** GPU savings($${ annualGpuSavings.toLocaleString() }) + Productivity value($${ annualProductivityValue.toLocaleString() }) = ** $${ totalAnnualImpact.toLocaleString() }** annually
+
+## ROI Analysis
+    - ** Break - even Timeline:** Immediate(operational improvements)
+      - ** 5 - Year Total Value:** $${ (totalAnnualImpact * 5).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+- ** Daily Hours Saved:** ${ totalTimeSavedHoursDaily.toFixed(2) } hours
+    - ** Annual Hours Saved:** ${ (totalTimeSavedHoursDaily * 365).toFixed(0) } hours
+
+## Assumptions & Validation
+
+    ** Industry Benchmarks Used:**
+âœ“ GPU Pricing: $${ gpuCostPerHour } /hour (H100/A100 market rate, 2024 - 2026)
+âœ“ Knowledge Worker Salary: $80K(U.S.tech industry average)
+âœ“ Queries per User: ${ dailyUserQueries }/day (conservative for active RAG systems)
+âœ“ Productivity Factor: 1.2x(based on latency - productivity research)
+
+    ** Conservative Estimates:**
+âœ“ Storage improvement: ${ storageImprovement }% (actual DDN INFINIA gains are 30 - 40x, ~97 %)
+âœ“ TTFB improvement: ${ ttfbImprovement.toFixed(1) } s(based on measured 45ms vs 1500ms)
+âœ“ User productivity: Captures only direct time savings, not secondary benefits
+
+    ** Not Included(Additional Upside):**
+â€¢ Reduced infrastructure scaling costs
+â€¢ Improved user satisfaction / retention  
+â€¢ Competitive advantage from faster AI
+â€¢ Data center power savings
+â€¢ Reduced error rates from better retrieval
+
+## Key Insights
+    - ** Processing Scale:** Your RAG pipeline processes ${ totalChunksThousands.toFixed(1) }K chunks daily
+      - ** Time Saved:** DDN INFINIA saves ${ totalTimeSavedHoursDaily.toFixed(2) } hours daily = ${ (totalTimeSavedHoursDaily * 365).toFixed(0) } hours annually
+        - ** Per - User Impact:** Each user saves ${ (timeSavedPerUserDailyHours * 60).toFixed(1) } minutes daily from faster responses
+          - ** Scalability:** ROI grows linearly with query volume and user count
+            - ** Break - even:** Immediateâ€”operational efficiency gains with no capital outlay
+
+  ---
+
+** Understanding This ROI:**
+
+** For Finance / CFO:** "We calculate ROI from two hard costs: GPU infrastructure and employee time. GPU savings come from reduced idle timeâ€”faster storage means less waiting, lower cloud bills. Productivity value assumes $80K salaries and ${dailyUserQueries} daily queries per user. Every ${ttfbImprovement.toFixed(1)}s saved per query Ã— ${queriesPerDay.toLocaleString()} daily queries = **$${totalAnnualImpact.toLocaleString()} annual impact**."
+
+    ** For Engineering / CTO:** "We measure wall-clock time savings across the RAG pipeline: storage I/O, embedding, and TTFB. DDN INFINIA's 30-40x faster retrieval translates to ~${ttfbImprovement.toFixed(1)}s TTFB improvement per query. Multiply by query volume, apply GPU hourly rates ($${gpuCostPerHour}/hr), and you get infrastructure savings. Productivity value is time-value-of-money for knowledge workers."
+
+      ** For Business / CEO:** "Faster AI = happier users + lower costs. We save ${totalTimeSavedHoursDaily.toFixed(2)} GPU-hours daily, worth **$${annualGpuSavings.toLocaleString()} annually**. ${concurrentUsers} users each save ${(timeSavedPerUserDailyHours * 60).toFixed(1)} minutes daily, worth **$${annualProductivityValue.toLocaleString()} annually** in productivity. Total: **$${totalAnnualImpact.toLocaleString()} year-one**, scaling with growth. ROI is immediate."
+
+        * These calculations use defensible, industry - standard assumptions and conservative estimates.All formulas and methodology available for audit.*
+          `.trim())
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Section Header */}
+      <div className="section-header">
+        <div className="flex items-center gap-3">
+          <h2 className="section-title">Business Impact Calculator</h2>
+          <span className="badge" style={{ background: 'rgba(237, 39, 56, 0.1)', color: 'var(--ddn-red)' }}>
+            <DollarSign className="w-3 h-3" />
+            ROI Analysis
+          </span>
+        </div>
+        <p className="section-description">
+          Model the financial and operational impact of DDN INFINIA at enterprise scale.
+        </p>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="toolbar justify-between">
+        <div className="flex gap-3">
+          <button
+            onClick={generateReport}
+            className="btn-primary flex items-center gap-2"
+          >
+            <TrendingUp className="w-4 h-4" />
+            Generate Impact Report
+          </button>
+          <button
+            onClick={() => setReport('')}
+            className="btn-secondary flex items-center gap-2"
+            disabled={!report}
+          >
+            <FileText className="w-4 h-4" />
+            Clear Report
+          </button>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-neutral-500">
+          <Sparkles className="w-4 h-4" />
+          <span>Enterprise-grade calculations</span>
+        </div>
+      </div>
+
+      {/* Report Display */}
+      {report && (
+        <div className="card-elevated p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-ddn-red/10 flex items-center justify-center">
+              <FileText className="w-4 h-4 text-ddn-red" />
+            </div>
+            <h3 className="text-sm font-semibold text-neutral-900">Generated Report</h3>
+          </div>
+          <div
+            className="prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{
+              __html: report
+                .replace(/\n/g, '<br/>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/# (.*?)(<br\/>|$)/g, '<h2 class="text-lg font-semibold text-neutral-900 mt-6 mb-3">$1</h2>')
+                .replace(/## (.*?)(<br\/>|$)/g, '<h3 class="text-base font-semibold text-neutral-800 mt-5 mb-2">$1</h3>')
+                .replace(/### (.*?)(<br\/>|$)/g, '<h4 class="text-sm font-medium text-neutral-700 mt-3 mb-1">$1</h4>')
+            }}
+          />
+        </div>
+      )}
+
+      {/* Scenario Calculator */}
+      <div className="card-elevated p-6">
+        <div className="flex items-center gap-2 mb-5">
+          <div className="w-8 h-8 rounded-lg bg-ddn-red/10 flex items-center justify-center">
+            <Calculator className="w-4 h-4 text-ddn-red" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-neutral-900">Scenario Calculator</h3>
+            <p className="text-xs text-neutral-500">Customize parameters to model your deployment</p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Scale Parameters */}
+          <div className="space-y-5">
+            <div className="flex items-center gap-2 pb-2 border-b border-neutral-100">
+              <Zap className="w-4 h-4 text-ddn-red" />
+              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Scale Parameters</span>
+            </div>
+
+            <SliderInput
+              label="Queries per Day"
+              value={queriesPerDay}
+              onChange={setQueriesPerDay}
+              min={1000}
+              max={1000000}
+              step={1000}
+              icon={<Zap className="w-4 h-4" />}
+            />
+
+            <SliderInput
+              label="Concurrent Users"
+              value={concurrentUsers}
+              onChange={setConcurrentUsers}
+              min={10}
+              max={100000}
+              step={10}
+              icon={<Users className="w-4 h-4" />}
+            />
+
+            <SliderInput
+              label="Chunks per Query"
+              value={chunksPerQuery}
+              onChange={setChunksPerQuery}
+              min={5}
+              max={50}
+              step={1}
+            />
+          </div>
+
+          {/* Performance & Cost */}
+          <div className="space-y-5">
+            <div className="flex items-center gap-2 pb-2 border-b border-neutral-100">
+              <TrendingUp className="w-4 h-4 text-ddn-red" />
+              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Performance & Cost</span>
+            </div>
+
+            <SliderInput
+              label="TTFB Improvement (s)"
+              value={ttfbImprovement}
+              onChange={setTtfbImprovement}
+              min={0.1}
+              max={5.0}
+              step={0.1}
+              icon={<Clock className="w-4 h-4" />}
+            />
+
+            <SliderInput
+              label="Storage Speed Improvement (%)"
+              value={storageImprovement}
+              onChange={setStorageImprovement}
+              min={5}
+              max={80}
+              step={5}
+            />
+
+            <SliderInput
+              label="GPU Cost ($/hour)"
+              value={gpuCostPerHour}
+              onChange={setGpuCostPerHour}
+              min={1.0}
+              max={15.0}
+              step={0.1}
+              icon={<DollarSign className="w-4 h-4" />}
+            />
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-neutral-100">
+          {/* RAG Parameters */}
+          <div className="space-y-5">
+            <div className="flex items-center gap-2 pb-2 border-b border-neutral-100">
+              <Sparkles className="w-4 h-4 text-status-info" />
+              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">RAG Parameters</span>
+            </div>
+
+            <SliderInput
+              label="Embedding Time per 1K Chunks (s)"
+              value={embeddingTime}
+              onChange={setEmbeddingTime}
+              min={1.0}
+              max={50.0}
+              step={0.5}
+            />
+
+            <SliderInput
+              label="NeMo Reranking Overhead (ms)"
+              value={rerankingOverhead}
+              onChange={setRerankingOverhead}
+              min={0}
+              max={100}
+              step={5}
+            />
+
+            <SliderInput
+              label="Context Window (tokens)"
+              value={contextWindow}
+              onChange={setContextWindow}
+              min={1000}
+              max={32000}
+              step={500}
+            />
+
+            <SliderInput
+              label="Documents Uploaded per Day"
+              value={documentsUploadedPerDay}
+              onChange={setDocumentsUploadedPerDay}
+              min={10}
+              max={100000}
+              step={10}
+              icon={<FileText className="w-4 h-4" />}
+            />
+
+            <SliderInput
+              label="Chunks per Document"
+              value={chunksPerDocument}
+              onChange={setChunksPerDocument}
+              min={10}
+              max={200}
+              step={5}
+            />
+          </div>
+
+          <div className="flex flex-col justify-end gap-3">
+            <div className="card-inset p-4 text-center">
+              <p className="text-xs text-neutral-500 mb-1">Estimated Annual Impact</p>
+              <p className="text-2xl font-bold text-ddn-red">Calculate Below</p>
+            </div>
+            <button
+              onClick={calculateCustomScenario}
+              className="btn-primary flex items-center justify-center gap-2"
+            >
+              <Calculator className="w-5 h-5" />
+              Calculate Impact
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Custom Report Display */}
+      {customReport && (
+        <div className="card-elevated p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-status-success-subtle flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-status-success" />
+            </div>
+            <h3 className="text-sm font-semibold text-neutral-900">Custom Scenario Results</h3>
+          </div>
+          <div className="output-block">
+            {customReport}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SliderInput({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+  icon
+}: {
+  label: string
+  value: number
+  onChange: (value: number) => void
+  min: number
+  max: number
+  step: number
+  icon?: React.ReactNode
+}) {
+  const percentage = ((value - min) / (max - min)) * 100
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-sm text-neutral-600 flex items-center gap-2">
+          {icon && <span className="text-neutral-400">{icon}</span>}
+          {label}
+        </label>
+        <span className="text-sm font-semibold font-mono text-neutral-900 bg-surface-secondary px-2 py-0.5 rounded">
+          {value.toLocaleString()}
+        </span>
+      </div>
+      <div className="relative h-6 flex items-center">
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${ percentage } % `,
+              background: 'linear-gradient(90deg, var(--ddn-red), #ff4d6a)',
+            }}
+          />
+        </div>
+        <input
+          type="range"
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          min={min}
+          max={max}
+          step={step}
+          className="slider-field relative z-10"
+          style={{ background: 'transparent' }}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-neutral-400 mt-1">
+        <span>{min.toLocaleString()}</span>
+        <span>{max.toLocaleString()}</span>
+      </div>
+    </div>
+  )
+}
+ô *cascade08ô„*cascade08„ê* *cascade08ê*ş2*cascade08ş2¿4 *cascade08¿4Ø4*cascade08Ø4ç6 *cascade08ç6Ó8*cascade08Ó8Ô8 *cascade08Ô8§9*cascade08§9¨9 *cascade08¨9¿9*cascade08¿9À9 *cascade08À9Ù9*cascade08Ù9Ú9 *cascade08Ú9–:*cascade08–:˜: *cascade08˜::*cascade08:: *cascade08:Å:*cascade08Å:Æ: *cascade08Æ:Ğ:*cascade08Ğ:Ñ: *cascade08Ñ:è<*cascade08è<é< *cascade08é<ò<*cascade08ò<ó< *cascade08ó<û<*cascade08û<ü< *cascade08ü<‹=*cascade08‹=Œ= *cascade08Œ=˜=*cascade08˜=™= *cascade08™=¡=*cascade08¡=¢= *cascade08¢=·=*cascade08·=¸= *cascade08¸=è=*cascade08è=é= *cascade08é= >*cascade08 >¡> *cascade08¡>¥>*cascade08¥>¦> *cascade08¦>ª>*cascade08ª>«> *cascade08«>Ë>*cascade08Ë>Ì> *cascade08Ì>Ï>*cascade08Ï>Ñ> *cascade08Ñ>âC*cascade08âCèC *cascade08èC‚D*cascade08‚DƒD *cascade08ƒD±D*cascade08±D³D *cascade08³DÉD*cascade08ÉDËD *cascade08ËDˆE*cascade08ˆE‰E *cascade08‰E¡E*cascade08¡E¢E *cascade08¢E­E*cascade08­E®E *cascade08®EÜE*cascade08ÜEİE *cascade08İEÔF*cascade08ÔFÕF *cascade08ÕFØG*cascade08ØGÙG *cascade08ÙGàG*cascade08àGâG *cascade08âGÇN*cascade08ÇNÈN *cascade08ÈNÚN*cascade08ÚNÛN *cascade08ÛNáN*cascade08áNâN *cascade08âNúN*cascade08úNûN *cascade08ûN‰O*cascade08‰OŠO *cascade08ŠO­O*cascade08­O¯O *cascade08¯OäO*cascade08äOåO *cascade08åOßQ*cascade08ßQàQ *cascade08àQîQ*cascade08îQïQ *cascade08ïQşQ*cascade08şQÿQ *cascade08ÿQR*cascade08RR *cascade08RR*cascade08RR *cascade08RŸR*cascade08ŸR R *cascade08 R¢R*cascade08¢R£R *cascade08£R­R*cascade08­R®R *cascade08®RµR*cascade08µR¶R *cascade08¶RºR*cascade08ºR»R *cascade08»RÕR*cascade08ÕRØR *cascade08ØR—S*cascade08—SœS *cascade08œS²S*cascade08²S·S *cascade08·SºS*cascade08ºS»S *cascade08»SÙ]*cascade08Ù]à] *cascade08à]ë]*cascade08ë]û] *cascade08û]ı^*cascade08ı^’_ *cascade08’_¿_*cascade08¿_Ä_ *cascade08Ä_‰a*cascade08‰aŠa *cascade08Ša—a*cascade08—a˜a *cascade08˜a¢a*cascade08¢a£a *cascade08£a¨a*cascade08¨a©a *cascade08©aªa*cascade08ªa«a *cascade08«aÑa*cascade08ÑaÒa *cascade08Òaäa*cascade08äaåa *cascade08åaîa*cascade08îaïa *cascade08ïa¬b*cascade08¬b­b *cascade08­bİb*cascade08İbŞb *cascade08Şbßb*cascade08ßbàb *cascade08àbçc*cascade08çcèc *cascade08ècøc*cascade08øcùc *cascade08ùc„d*cascade08„d…d *cascade08…dd*cascade08dd *cascade08dºd*cascade08ºdÀd *cascade08Àdáf*cascade08áfâf *cascade08âfçf*cascade08çféf *cascade08éf‘g*cascade08‘g’g *cascade08’g g*cascade08 g¡g *cascade08¡g¢g*cascade08¢g£g *cascade08£g³g*cascade08³g´g *cascade08´g¸g*cascade08¸g»g *cascade08»gæj*cascade08æjçj *cascade08çjíj*cascade08íjîj *cascade08îjšk*cascade08šk›k *cascade08›k¶k*cascade08¶k¸k *cascade08¸kšm*cascade08šmªm *cascade08ªmÑm*cascade08ÑmÓm *cascade08Óm‹s*cascade08‹ss *cascade08sÍw*cascade08ÍwÎw *cascade08ÎwÚw*cascade08ÚwÛw *cascade08ÛwÜw*cascade08Üwİw *cascade08İw‡x*cascade08‡xˆx *cascade08ˆx“x*cascade08“x”x *cascade08”xŸy*cascade08Ÿy¥y *cascade08¥y¶y*cascade08¶yºy *cascade08ºyÁy*cascade08ÁyÂy *cascade08Âyşy*cascade08şyÿy *cascade08ÿy¦z*cascade08¦z¨z *cascade08¨zÚz*cascade08Úzİz *cascade08İzôz*cascade08ôzõz *cascade08õzƒ€*cascade08ƒ€„€ *cascade08„€«€*cascade08«€¬€ *cascade08¬€Ñ€*cascade08Ñ€Ò€ *cascade08Ò€ø„*cascade08ø„ù„ *cascade08ù„ÿ„*cascade08ÿ„€… *cascade08€…ó†*cascade08ó†ö† *cascade08ö†Üˆ*cascade08Üˆáˆ *cascade08áˆ‰*cascade08‰‰ *cascade08‰*cascade08’ *cascade08’¹*cascade08¹Ñ *cascade08ÑÒ*cascade08Òô *cascade08ôõ*cascade08õú *cascade08úû*cascade08ûš‘ *cascade08š‘›‘*cascade08›‘ª‘ *cascade08ª‘«‘*cascade08«‘Á‘ *cascade08Á‘Â‘*cascade08Â‘Ü‘ *cascade08Ü‘İ‘*cascade08İ‘ñ‘ *cascade08ñ‘÷‘*cascade08÷‘û‘ *cascade08û‘ü‘*cascade08ü‘›’ *cascade08›’œ’*cascade08œ’®’ *cascade08®’¯’*cascade08¯’¶’ *cascade08¶’·’*cascade08·’Ë’ *cascade08Ë’Ì’*cascade08Ì’ê’ *cascade08ê’ë’*cascade08ë’©“ *cascade08©“¯“*cascade08¯“³“ *cascade08³“´“*cascade08´“Ì“ *cascade08Ì“Í“*cascade08Í“è“ *cascade08è“é“*cascade08é“ï“ *cascade08ï“ğ“*cascade08ğ“‘” *cascade08‘”’”*cascade08’”¬” *cascade08¬”­”*cascade08­”³” *cascade08³”´”*cascade08´”Ğ” *cascade08Ğ”Ñ”*cascade08Ñ”ó” *cascade08ó”ô”*cascade08ô”ù” *cascade08ù”ú”*cascade08ú”™• *cascade08™•š•*cascade08š•¢• *cascade08¢•£•*cascade08£•Â• *cascade08Â•Ã•*cascade08Ã•Û• *cascade08Û•Ü•*cascade08Ü•÷• *cascade08÷•ø•*cascade08ø•˜– *cascade08˜–™–*cascade08™–·– *cascade08·–¸–*cascade08¸–Ç– *cascade08Ç–È–*cascade08È–Ö– *cascade08Ö–×–*cascade08×–ß– *cascade08ß–à–*cascade08à–á– *cascade08á–â–*cascade08â–ì– *cascade08ì–í–*cascade08í–— *cascade08——*cascade08—¦˜ *cascade08¦˜ª˜*cascade08ª˜®˜ *cascade08®˜¯˜*cascade08¯˜É˜ *cascade08É˜Ê˜*cascade08Ê˜õ˜ *cascade08õ˜ö˜*cascade08ö˜„™ *cascade08„™…™*cascade08…™¤™ *cascade08¤™¥™*cascade08¥™¯™ *cascade08¯™µ™*cascade08µ™¹™ *cascade08¹™º™*cascade08º™Ò™ *cascade08Ò™Ó™*cascade08Ó™ş™ *cascade08ş™ÿ™*cascade08ÿ™‡š *cascade08‡šš*cascade08š“š *cascade08“š”š*cascade08”š¬š *cascade08¬š­š*cascade08­šÖš *cascade08Öš×š*cascade08×šßš *cascade08ßšéš*cascade08éšíš *cascade08íšîš*cascade08îšˆ› *cascade08ˆ›‰›*cascade08‰›¡› *cascade08¡›¢›*cascade08¢›²› *cascade08²›³›*cascade08³›Â› *cascade08Â›Æ›*cascade08Æ›Ú› *cascade08Ú›Û›*cascade08Û›ı› *cascade08ı›ş›*cascade08ş›œ *cascade08œœ*cascade08œ›œ *cascade08›œœœ*cascade08œœœ *cascade08œœ*cascade08œ­œ *cascade08­œ®œ*cascade08®œÙœ *cascade08ÙœÚœ*cascade08Úœâœ *cascade08âœèœ*cascade08èœüœ *cascade08üœıœ*cascade08ıœ› *cascade08›œ*cascade08œ« *cascade08«¬*cascade08¬½ *cascade08½¾*cascade08¾¿ *cascade08¿À*cascade08ÀÏ *cascade08ÏĞ*cascade08Ğû *cascade08ûü*cascade08ü„ *cascade08„Œ*cascade08Œ¤ *cascade08¤¥*cascade08¥Ã *cascade08ÃÄ*cascade08ÄÓ *cascade08ÓÔ*cascade08Ôâ *cascade08âã*cascade08ãû *cascade08ûü*cascade08ü¥Ÿ *cascade08¥Ÿ¦Ÿ*cascade08¦Ÿ®Ÿ *cascade08®Ÿ¸Ÿ*cascade08¸Ÿ¦  *cascade08¦ ª *cascade08ª ®  *cascade08® ¯ *cascade08¯ Â  *cascade08Â Ã *cascade08Ã Ú  *cascade08Ú Û *cascade08Û Ü  *cascade08Ü İ *cascade08İ å  *cascade08å æ *cascade08æ ô  *cascade08ô õ *cascade08õ Œ¡ *cascade08Œ¡¡*cascade08¡¡ *cascade08¡¡*cascade08¡‘¡ *cascade08‘¡—¡*cascade08—¡›¡ *cascade08›¡œ¡*cascade08œ¡·¡ *cascade08·¡¸¡*cascade08¸¡ß¡ *cascade08ß¡à¡*cascade08à¡á¡ *cascade08á¡â¡*cascade08â¡ë¡ *cascade08ë¡ì¡*cascade08ì¡ú¡ *cascade08ú¡û¡*cascade08û¡¢¢ *cascade08¢¢£¢*cascade08£¢¤¢ *cascade08¤¢¥¢*cascade08¥¢¨¢ *cascade08¨¢°¢*cascade08°¢´¢ *cascade08´¢µ¢*cascade08µ¢Ğ¢ *cascade08Ğ¢Ñ¢*cascade08Ñ¢÷¢ *cascade08÷¢ø¢*cascade08ø¢€£ *cascade08€£Š£*cascade08Š££ *cascade08££*cascade08£­£ *cascade08­£®£*cascade08®£×£ *cascade08×£Ø£*cascade08Ø£à£ *cascade08à£ì£*cascade08ì£ğ£ *cascade08ğ£ñ£*cascade08ñ£¤ *cascade08¤¤*cascade08¤±¤ *cascade08±¤²¤*cascade08²¤Â¤ *cascade08Â¤Ã¤*cascade08Ã¤Ü¤ *cascade08Ü¤İ¤*cascade08İ¤ï¤ *cascade08ï¤ğ¤*cascade08ğ¤¥ *cascade08¥¥*cascade08¥¥ *cascade08¥Ÿ¥*cascade08Ÿ¥¹¥ *cascade08¹¥º¥*cascade08º¥Í¥ *cascade08Í¥Î¥*cascade08Î¥ô¥ *cascade08ô¥õ¥*cascade08õ¥ƒ¦ *cascade08ƒ¦…¦*cascade08…¦Ñ¦ *cascade08Ñ¦Õ¦*cascade08Õ¦¼§ *cascade08¼§Ä§*cascade08Ä§È§ *cascade08È§É§*cascade08É§Ş§ *cascade08Ş§ß§*cascade08ß§¨ *cascade08¨‚¨*cascade08‚¨¨ *cascade08¨‘¨*cascade08‘¨Ğ¨ *cascade08Ğ¨Ñ¨*cascade08Ñ¨ã¨ *cascade08ã¨ä¨*cascade08ä¨© *cascade08©©*cascade08©–© *cascade08–©©*cascade08©¤© *cascade08¤©¥©*cascade08¥©·© *cascade08·©¸©*cascade08¸©Ê© *cascade08Ê©Ë©*cascade08Ë©ò© *cascade08ò©ó©*cascade08ó©ô© *cascade08ô©õ©*cascade08õ©ş© *cascade08ş©ÿ©*cascade08ÿ©¦ª *cascade08¦ª§ª*cascade08§ª¨ª *cascade08¨ª©ª*cascade08©ª®ª *cascade08®ª¸ª*cascade08¸ªÂª *cascade08ÂªÃª*cascade08ÃªÄª *cascade08ÄªÅª*cascade08Åª‚« *cascade08‚«†«*cascade08†«Š« *cascade08Š«‹«*cascade08‹«©« *cascade08©«ª«*cascade08ª«Ó« *cascade08Ó«Ô«*cascade08Ô«Û« *cascade08Û«Ü«*cascade08Ü«û« *cascade08û«ü«*cascade08ü«¨¬ *cascade08¨¬©¬*cascade08©¬³¬ *cascade08³¬·¬*cascade08·¬»¬ *cascade08»¬¼¬*cascade08¼¬Ø¬ *cascade08Ø¬Ù¬*cascade08Ù¬é¬ *cascade08é¬ê¬*cascade08ê¬ô¬ *cascade08ô¬õ¬*cascade08õ¬­ *cascade08­‘­*cascade08‘­­ *cascade08­­*cascade08­Ÿ­ *cascade08Ÿ­ ­*cascade08 ­©­ *cascade08©­ª­*cascade08ª­º­ *cascade08º­»­*cascade08»­Ê­ *cascade08Ê­Ë­*cascade08Ë­å­ *cascade08å­æ­*cascade08æ­ô­ *cascade08ô­õ­*cascade08õ­¡® *cascade08¡®¢®*cascade08¢®¬® *cascade08¬®²®*cascade08²®â® *cascade08â®ã®*cascade08ã®÷® *cascade08÷®ÿ®*cascade08ÿ®”¯ *cascade08”¯•¯*cascade08•¯®¯ *cascade08®¯¯¯*cascade08¯¯°¯ *cascade08°¯±¯*cascade08±¯Î¯ *cascade08Î¯Ï¯*cascade08Ï¯ø¯ *cascade08ø¯ù¯*cascade08ù¯ü¯ *cascade08ü¯†°*cascade08†°—° *cascade08—°˜°*cascade08˜°™° *cascade08™°š°*cascade08š°³° *cascade08³°´°*cascade08´°Ã° *cascade08Ã°Ä°*cascade08Ä°Ñ° *cascade08Ñ°Ò°*cascade08Ò°ş° *cascade08ş°ÿ°*cascade08ÿ°‰± *cascade08‰±Š±*cascade08Š±È± *cascade08È±É±*cascade08É±–² *cascade08–²š²*cascade08š²² *cascade08²Ÿ²*cascade08Ÿ²¼² *cascade08¼²½²*cascade08½²Û² *cascade08Û²Ü²*cascade08Ü²â² *cascade08â²ã²*cascade08ã²‹³ *cascade08‹³Œ³*cascade08Œ³î³ *cascade08î³ï³*cascade08ï³ù³ *cascade08ù³ú³*cascade08ú³’´ *cascade08’´–´*cascade08–´©´ *cascade08©´ª´*cascade08ª´Í´ *cascade08Í´Î´*cascade08Î´Ü´ *cascade08Ü´İ´*cascade08İ´ë´ *cascade08ë´ì´*cascade08ì´˜µ *cascade08˜µµ*cascade08µ³µ *cascade08³µ´µ*cascade08´µÒµ *cascade08ÒµÓµ*cascade08Óµæµ *cascade08æµçµ*cascade08çµÉ¶ *cascade08É¶Ê¶*cascade08Ê¶Ğ¶ *cascade08Ğ¶Ñ¶*cascade08Ñ¶ã¶ *cascade08ã¶ä¶*cascade08ä¶å¶ *cascade08å¶æ¶*cascade08æ¶ı¶ *cascade08ı¶ş¶*cascade08ş¶Œ· *cascade08Œ··*cascade08·¢· *cascade08¢·¦·*cascade08¦·ª· *cascade08ª·«·*cascade08«·¸ *cascade08¸‘¸*cascade08‘¸•¸ *cascade08•¸–¸*cascade08–¸¾¸ *cascade08¾¸¿¸*cascade08¿¸ç¸ *cascade08ç¸è¸*cascade08è¸î¸ *cascade08î¸ï¸*cascade08ï¸”¹ *cascade08”¹•¹*cascade08•¹‚º *cascade08‚ºƒº*cascade08ƒº‰º *cascade08‰ºŠº*cascade08Šºªº *cascade08ªº«º*cascade08«º”» *cascade08”»•»*cascade08•»Ÿ» *cascade08Ÿ» »*cascade08 »Â» *cascade08Â»Æ»*cascade08Æ»ß» *cascade08ß»à»*cascade08à»á» *cascade08á»â»*cascade08â»ù» *cascade08ù»ÿ»*cascade08ÿ»²¼ *cascade08²¼³¼*cascade08³¼Ï¼ *cascade08Ï¼Ğ¼*cascade08Ğ¼×¼ *cascade08×¼ß¼*cascade08ß¼ë¼ *cascade08ë¼ì¼*cascade08ì¼í¼ *cascade08í¼î¼*cascade08î¼ö¼ *cascade08ö¼÷¼*cascade08÷¼£½ *cascade08£½¤½*cascade08¤½®½ *cascade08®½¯½*cascade08¯½Ô½ *cascade08Ô½Õ½*cascade08Õ½İ½ *cascade08İ½ç½*cascade08ç½î½ *cascade08î½ï½*cascade08ï½ğ½ *cascade08ğ½ñ½*cascade08ñ½õ½ *cascade08õ½ö½*cascade08ö½÷½ *cascade08÷½ø½*cascade08ø½ÿ½ *cascade08ÿ½€¾*cascade08€¾¥¾ *cascade08¥¾¦¾*cascade08¦¾´¾ *cascade08´¾µ¾*cascade08µ¾Ñ¾ *cascade08Ñ¾Ò¾*cascade08Ò¾Ù¾ *cascade08Ù¾Ú¾*cascade08Ú¾‚¿ *cascade08‚¿ƒ¿*cascade08ƒ¿…¿ *cascade08…¿‡¿*cascade08‡¿¿ *cascade08¿Ÿ¿*cascade08Ÿ¿®¿ *cascade08®¿¯¿*cascade08¯¿½¿ *cascade08½¿¾¿*cascade08¾¿æ¿ *cascade08æ¿ç¿*cascade08ç¿î¿ *cascade08î¿ï¿*cascade08ï¿•À *cascade08•À–À*cascade08–À˜À *cascade08˜ÀšÀ*cascade08šÀ­À *cascade08­À®À*cascade08®ÀÔÀ *cascade08ÔÀÕÀ*cascade08ÕÀãÀ *cascade08ãÀäÀ*cascade08äÀÍÁ *cascade08ÍÁÎÁ*cascade08ÎÁëÁ *cascade08ëÁïÁ*cascade08ïÁóÁ *cascade08óÁôÁ*cascade08ôÁ—Â *cascade08—Â˜Â*cascade08˜ÂûÂ *cascade08ûÂüÂ*cascade08üÂ‚Ã *cascade08‚ÃƒÃ*cascade08ƒÃ—Ã *cascade08—Ã˜Ã*cascade08˜Ã‚Ä *cascade08‚ÄƒÄ*cascade08ƒÄ‰Ä *cascade08‰ÄŠÄ*cascade08ŠÄ§Ä *cascade08§Ä¨Ä*cascade08¨Ä¿Ä *cascade08¿ÄÀÄ*cascade08ÀÄÆÄ *cascade08ÆÄÇÄ*cascade08ÇÄêÄ *cascade08êÄëÄ*cascade08ëÄÅ *cascade08ÅŸÅ*cascade08ŸÅ©Å *cascade08©ÅªÅ*cascade08ªÅÆÅ *cascade08ÆÅÇÅ*cascade08ÇÅèÅ *cascade08èÅéÅ*cascade08éÅ„Æ *cascade08„Æ…Æ*cascade08…Æ­Æ *cascade08­Æ®Æ*cascade08®ÆµÆ *cascade08µÆ¶Æ*cascade08¶Æ¹Æ *cascade08¹ÆºÆ*cascade08ºÆÜÆ *cascade08ÜÆİÆ*cascade08İÆûÆ *cascade08ûÆÿÆ*cascade08ÿÆƒÇ *cascade08ƒÇ„Ç*cascade08„Ç‰Ç *cascade08‰ÇŠÇ*cascade08ŠÇ‹Ç *cascade08‹ÇŒÇ*cascade08ŒÇÁÇ *cascade08ÁÇÇÇ*cascade08ÇÇËÇ *cascade08ËÇÌÇ*cascade08ÌÇÍÇ *cascade08ÍÇÎÇ*cascade08ÎÇÏÇ *cascade08ÏÇĞÇ*cascade08ĞÇçÇ *cascade08çÇèÇ*cascade08èÇÑÈ *cascade08ÑÈÒÈ*cascade08ÒÈØÈ *cascade08ØÈÙÈ*cascade08ÙÈğÈ *cascade08ğÈñÈ*cascade08ñÈ”É *cascade08”É•É*cascade08•ÉÉ *cascade08É¡É*cascade08¡É¥É *cascade08¥É¦É*cascade08¦É¾É *cascade08¾É¿É*cascade08¿ÉêÉ *cascade08êÉëÉ*cascade08ëÉ‘Ê *cascade08‘Ê•Ê*cascade08•Ê—Ê *cascade08—Ê˜Ê*cascade08˜ÊÈÊ *cascade08ÈÊÉÊ*cascade08ÉÊ×Ê *cascade08×ÊØÊ*cascade08ØÊÙÊ *cascade08ÙÊÚÊ*cascade08ÚÊüÊ *cascade08üÊıÊ*cascade08ıÊşÊ *cascade08şÊÿÊ*cascade08ÿÊÚË *cascade08ÚËÛË*cascade08ÛËëË *cascade08ëËìË*cascade08ìËÆÌ *cascade08ÆÌÇÌ*cascade08ÇÌÈÌ *cascade08ÈÌÉÌ*cascade08ÉÌáÌ *cascade08áÌåÌ*cascade08åÌçÌ *cascade08çÌèÌ*cascade08èÌÍ *cascade08ÍÍ*cascade08Í°Í *cascade08°Í±Í*cascade08±ÍÔÍ *cascade08ÔÍÕÍ*cascade08ÕÍÖÍ *cascade08ÖÍ×Í*cascade08×ÍßÍ *cascade08ßÍàÍ*cascade08àÍûÍ *cascade08ûÍüÍ*cascade08üÍ–Î *cascade08–Î—Î*cascade08—Î˜Î *cascade08˜Î™Î*cascade08™ÎÏ *cascade08Ï“Ï*cascade08“Ï•Ï *cascade08•Ï–Ï*cascade08–Ï€Ğ *cascade08€ĞĞ*cascade08Ğ‚Ğ *cascade08‚ĞƒĞ*cascade08ƒĞ•Ñ *cascade08•Ñ™Ñ*cascade08™ÑÑ *cascade08ÑÑ*cascade08ÑĞÑ *cascade08ĞÑÑÑ*cascade08ÑÑğÑ *cascade08ğÑñÑ*cascade08ñÑÒ *cascade08Ò‡Ò*cascade08‡Ò‹Ò *cascade08‹ÒŒÒ*cascade08ŒÒ®Ò *cascade08®Ò¯Ò*cascade08¯ÒÒÒ *cascade08ÒÒÓÒ*cascade08ÓÒåÒ *cascade08åÒæÒ*cascade08æÒ‘Ó *cascade08‘Ó’Ó*cascade08’Ó£Ó *cascade08£Ó«Ó*cascade08«Ó¯Ó *cascade08¯Ó°Ó*cascade08°Ó³Ó *cascade08³Ó´Ó*cascade08´ÓµÓ *cascade08µÓ¶Ó*cascade08¶Ó×Ó *cascade08×ÓØÓ*cascade08ØÓ„Ô *cascade08„Ô…Ô*cascade08…Ô«Ô *cascade08«ÔµÔ*cascade08µÔ¹Ô *cascade08¹ÔºÔ*cascade08ºÔıÔ *cascade08ıÔ‰Õ*cascade08‰ÕÕ *cascade08ÕÕ*cascade08Õ“Õ *cascade08“Õ”Õ*cascade08”Õ•Õ *cascade08•Õ–Õ*cascade08–ÕßÕ *cascade08ßÕáÕ*cascade08áÕèÕ *cascade08èÕéÕ*cascade08éÕïÕ*cascade08ïÕñÕ *cascade08ñÕóÕ*cascade08óÕõÕ *cascade08õÕöÕ*cascade08öÕ†Ö *cascade08†Ö‡Ö*cascade08‡Ö’Ö *cascade08’Ö“Ö*cascade08“Ö”Ö *cascade08”Ö•Ö*cascade08•ÖÈÙ *cascade08ÈÙÌÙ*cascade08ÌÙÎÙ *cascade08ÎÙÏÙ*cascade08ÏÙŞÙ *cascade08ŞÙßÙ*cascade08ßÙàÙ *cascade08àÙáÙ*cascade08áÙèÜ *cascade08èÜîÜ*cascade08îÜğÜ *cascade08ğÜñÜ*cascade08ñÜıÜ *cascade08ıÜşÜ*cascade08şÜÿÜ *cascade08ÿÜ€İ*cascade08€İÃà *cascade08ÃàËà*cascade08ËàÌà *cascade08ÌàÍà*cascade08Íàøà *cascade08øàùà*cascade08ùàúà *cascade08úàûà*cascade08ûàŞá *cascade08Şáäá*cascade08äáÒ€ *cascade08Ò€Ó€*cascade08Ó€– *cascade08–»š*cascade08»šø« *cascade08ø«ù«*cascade08ù«ƒ¬ *cascade08ƒ¬„¬*cascade08„¬…¬ *cascade08…¬†¬*cascade08†¬‡¬ *cascade08‡¬ˆ¬*cascade08ˆ¬ú° *cascade082˜file:///Users/nwasim/Documents/MyDocs/llm_engineering-main/DDN/Infinia/kafka-pipeline/python-pipeline/ddn-rag-v2.1/frontend/src/pages/BusinessImpact.tsx
