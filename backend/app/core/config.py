@@ -27,6 +27,26 @@ class Settings(BaseSettings):
     # Chunking defaults
     chunk_size: int = 500
     chunk_overlap: int = 50
+    
+    # CJK (Chinese/Japanese/Korean) Optimization
+    chunk_size_cjk: int = 1000
+    chunk_overlap_cjk: int = 100
+    enable_language_detection: bool = True
+    
+    # Multi-GPU Settings
+    use_multi_gpu: bool = Field(default=False, alias="USE_MULTI_GPU")
+    max_gpus: int = Field(default=0, alias="MAX_GPUS")
+    
+    # Performance Settings
+    parallel_processing: bool = Field(default=True, alias="PARALLEL_PROCESSING")
+    max_upload_size_mb: int = 100
+    enable_progress_tracking: bool = True
+    
+    # Offline Mode & Local LLM
+    offline_mode: bool = Field(default=False, alias="OFFLINE_MODE")
+    local_llm_model: str = Field(default="meta-llama/Llama-2-7b-chat-hf", alias="LOCAL_LLM_MODEL")
+    local_llm_device: str = "cuda:0"
+    use_local_llm: bool = Field(default=False, alias="USE_LOCAL_LLM")
 
     # CORS
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"]

@@ -1,6 +1,12 @@
 """
 Vector store service using FAISS with dual-provider object storage.
 """
+# CRITICAL: Set these BEFORE importing torch/transformers to prevent segfault
+import os
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
 import time
 import pickle
 import hashlib
@@ -25,7 +31,13 @@ class VectorStore:
 
     def __init__(self, embedding_model_name: str = None, providers: List[str] = None):
         self.model_name = embedding_model_name or settings.embedding_model
-        self.embedding_model = SentenceTransformer(self.model_name)
+        # Auto-detect GPU
+        try:
+            import torch
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        except ImportError:
+            device = "cpu"
+        self.embedding_model = SentenceTransformer(self.model_name, device=device)
         self.embedding_dim = self.embedding_model.get_sentence_embedding_dimension()
 
 
@@ -52,7 +64,7 @@ class VectorStore:
 
     def encode(self, texts: List[str]) -> np.ndarray:
         """Encode texts to embeddings."""
-        return self.embedding_model.encode(texts, convert_to_numpy=True)
+        return self.embedding_model.encode(texts, convert_to_numpy=True, show_progress_bar=False)
 
     def add_chunks(self, chunks: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Add chunks to vector store and object storage."""
@@ -70,11 +82,13 @@ class VectorStore:
         
         # Generate ALL embeddings at once (much faster and avoids threading issues)
         logger.info(f"🔮 Generating embeddings for {len(contents)} chunks...")
+        logger.info(f"   Calling embedding model with batch_size=32...")
         embeddings = self.embedding_model.encode(
             contents,
             show_progress_bar=False,  # Disable progress bar to prevent hanging in background threads
             batch_size=32  # Process in batches of 32 for efficiency
         )
+        logger.info(f"   Embeddings shape: {embeddings.shape}")
         logger.info(f"✅ Embeddings generated successfully")
 
         # Process each chunk with its pre-computed embedding
@@ -173,7 +187,7 @@ class VectorStore:
         if self.index.ntotal == 0:
             return []
 
-        query_embedding = self.embedding_model.encode([query])[0]
+        query_embedding = self.embedding_model.encode([query], show_progress_bar=False)[0]
         query_np = np.array([query_embedding], dtype=np.float32)
 
         distances, indices = self.index.search(query_np, min(top_k, self.index.ntotal))
@@ -201,7 +215,7 @@ class VectorStore:
             return {'results': [], 'provider_times': {}, 'fastest_provider': None}
 
         # FAISS search
-        query_embedding = self.embedding_model.encode([query])[0]
+        query_embedding = self.embedding_model.encode([query], show_progress_bar=False)[0]
         query_np = np.array([query_embedding], dtype=np.float32)
         distances, indices = self.index.search(query_np, min(top_k, self.index.ntotal))
 
