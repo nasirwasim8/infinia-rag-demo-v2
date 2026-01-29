@@ -1,0 +1,5 @@
+
+# Credentials (NEVER commit)
+backend/data/storage_config.json
+backend/data/*.json
+!backend/data/*.example.json
