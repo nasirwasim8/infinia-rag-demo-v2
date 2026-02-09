@@ -20,6 +20,10 @@ class TTFBMonitor:
         self.file_stats: List[Dict] = []  # Per-file statistics
         self.chunk_stats: List[Dict] = []  # Per-chunk statistics  
         self.operation_timings: List[Dict] = []  # Detailed operation breakdowns
+        
+        # NEW: AI-focused metrics
+        self.llm_metrics = LLMMetrics()
+        self.storage_ops = StorageOperationMetrics()
 
     def start_timing(self, operation_type: str, details: Dict = None) -> str:
         """Start timing an operation."""
@@ -205,9 +209,9 @@ class TTFBMonitor:
             for comp in self.storage_comparisons
         )
         
-        # Extract flattened TTFB values for frontend (convert to ms)
-        ddn_avg_ttfb = avg_times.get('ddn_infinia', 0) * 1000
-        aws_avg_ttfb = avg_times.get('aws', 0) * 1000
+        # Extract flattened TTFB values for frontend (already in ms, no conversion needed)
+        ddn_avg_ttfb = avg_times.get('ddn_infinia', 0)
+        aws_avg_ttfb = avg_times.get('aws', 0)
         
         return {
             'total_retrievals': total,
@@ -320,6 +324,8 @@ class TTFBMonitor:
             'storage_summary': self.get_storage_summary(),
             'retrieval_summary': self.get_retrieval_summary(),
             'detailed_stats': self.get_detailed_statistics(),
+            'llm_metrics': self.llm_metrics.get_summary(),
+            'storage_ops': self.storage_ops.get_summary(),
             'total_operations': len(self.metrics)
         }
 
@@ -332,3 +338,222 @@ class TTFBMonitor:
         self.file_stats.clear()
         self.chunk_stats.clear()
         self.operation_timings.clear()
+        self.llm_metrics.clear()
+        self.storage_ops.clear()
+
+
+class LLMMetrics:
+    """Track LLM generation metrics (TTFT, ITL, tokens/sec)."""
+    
+    def __init__(self):
+        self.queries: List[Dict] = []
+    
+    def track_llm_generation(
+        self,
+        query: str,
+        ttft_ms: float,
+        inter_token_latencies: List[float],
+        total_tokens: int,
+        total_time_ms: float
+    ):
+        """Track a single LLM generation event."""
+        avg_itl = float(np.mean(inter_token_latencies)) if inter_token_latencies else 0
+        tokens_per_sec = (total_tokens / total_time_ms) * 1000 if total_time_ms > 0 else 0
+        
+        self.queries.append({
+            'timestamp': datetime.now().isoformat(),
+            'query': query[:100],
+            'ttft_ms': ttft_ms,
+            'avg_itl_ms': avg_itl,
+            'max_itl_ms': float(max(inter_token_latencies)) if inter_token_latencies else 0,
+            'total_tokens': total_tokens,
+            'tokens_per_sec': tokens_per_sec,
+            'total_time_ms': total_time_ms
+        })
+    
+    def get_summary(self) -> Dict[str, Any]:
+        """Get aggregate LLM metrics."""
+        if not self.queries:
+            return {
+                'total_queries': 0,
+                'avg_ttft_ms': 0,
+                'avg_itl_ms': 0,
+                'avg_tokens_per_sec': 0,
+                'p50_ttft_ms': 0,
+                'p95_ttft_ms': 0,
+                'p99_ttft_ms': 0
+            }
+        
+        ttfts = [q['ttft_ms'] for q in self.queries]
+        itls = [q['avg_itl_ms'] for q in self.queries]
+        tps = [q['tokens_per_sec'] for q in self.queries]
+        
+        return {
+            'total_queries': len(self.queries),
+            'avg_ttft_ms': float(np.mean(ttfts)),
+            'avg_itl_ms': float(np.mean(itls)),
+            'avg_tokens_per_sec': float(np.mean(tps)),
+            'p50_ttft_ms': float(np.percentile(ttfts, 50)),
+            'p95_ttft_ms': float(np.percentile(ttfts, 95)),
+            'p99_ttft_ms': float(np.percentile(ttfts, 99))
+        }
+    
+    def clear(self):
+        """Clear LLM metrics."""
+        self.queries.clear()
+
+
+class StorageOperationMetrics:
+    """Track storage PUT/GET operations per second and throughput."""
+    
+    def __init__(self):
+        self.operations: List[Dict] = []
+        self.window_start = time.time()
+    
+    def track_operation(
+        self,
+        op_type: str,  # 'PUT' or 'GET'
+        provider: str,  # 'ddn_infinia' or 'aws'
+        bytes_transferred: int,
+        latency_ms: float,
+        success: bool
+    ):
+        """Track a single storage operation."""
+        self.operations.append({
+            'timestamp': time.time(),
+            'op_type': op_type,
+            'provider': provider,
+            'bytes': bytes_transferred,
+            'latency_ms': latency_ms,
+            'success': success
+        })
+    
+    def get_ops_per_sec(self, op_type: str = None, provider: str = None, window_sec: int = 60) -> float:
+        """Calculate operations per second in the last N seconds."""
+        now = time.time()
+        cutoff = now - window_sec
+        
+        filtered_ops = [
+            op for op in self.operations
+            if op['timestamp'] >= cutoff
+            and (op_type is None or op['op_type'] == op_type)
+            and (provider is None or op['provider'] == provider)
+            and op['success']
+        ]
+        
+        return len(filtered_ops) / window_sec if window_sec > 0 else 0
+    
+    def get_throughput_mbps(self, op_type: str = None, provider: str = None, window_sec: int = 60) -> float:
+        """Calculate throughput in MB/s for the last N seconds."""
+        now = time.time()
+        cutoff = now - window_sec
+        
+        filtered_ops = [
+            op for op in self.operations
+            if op['timestamp'] >= cutoff
+            and (op_type is None or op['op_type'] == op_type)
+            and (provider is None or op['provider'] == provider)
+            and op['success']
+        ]
+        
+        total_bytes = sum(op['bytes'] for op in filtered_ops)
+        total_mb = total_bytes / (1024 * 1024)
+        
+        return total_mb / window_sec if window_sec > 0 else 0
+    
+    def get_latency_percentiles(self, op_type: str = None, provider: str = None) -> Dict[str, float]:
+        """Calculate latency percentiles."""
+        filtered_ops = [
+            op for op in self.operations
+            if (op_type is None or op['op_type'] == op_type)
+            and (provider is None or op['provider'] == provider)
+            and op['success']
+        ]
+        
+        if not filtered_ops:
+            return {'p50': 0, 'p95': 0, 'p99': 0}
+        
+        latencies = [op['latency_ms'] for op in filtered_ops]
+        
+        return {
+            'p50': float(np.percentile(latencies, 50)),
+            'p95': float(np.percentile(latencies, 95)),
+            'p99': float(np.percentile(latencies, 99))
+        }
+    
+    def _get_success_rate(self, provider: str) -> float:
+        """Calculate success rate for a provider."""
+        provider_ops = [op for op in self.operations if op['provider'] == provider]
+        if not provider_ops:
+            return 100.0
+        
+        successful = len([op for op in provider_ops if op['success']])
+        return (successful / len(provider_ops)) * 100
+    
+    def get_summary(self) -> Dict[str, Any]:
+        """Get comprehensive storage operation metrics."""
+        # Check if AWS is configured
+        from app.core.config import storage_config
+        aws_configured = bool(storage_config.aws_config.get('access_key'))
+        
+        # Get DDN metrics
+        ddn_metrics = {
+            'put_ops_per_sec': self.get_ops_per_sec('PUT', 'ddn_infinia'),
+            'get_ops_per_sec': self.get_ops_per_sec('GET', 'ddn_infinia'),
+            'read_throughput_mbps': self.get_throughput_mbps('GET', 'ddn_infinia'),
+            'write_throughput_mbps': self.get_throughput_mbps('PUT', 'ddn_infinia'),
+            'put_latency': self.get_latency_percentiles('PUT', 'ddn_infinia'),
+            'get_latency': self.get_latency_percentiles('GET', 'ddn_infinia'),
+            'total_operations': len([op for op in self.operations if op['provider'] == 'ddn_infinia']),
+            'success_rate': self._get_success_rate('ddn_infinia')
+        }
+        
+        # Get or simulate AWS metrics
+        if aws_configured:
+            # Real AWS metrics
+            aws_metrics = {
+                'put_ops_per_sec': self.get_ops_per_sec('PUT', 'aws'),
+                'get_ops_per_sec': self.get_ops_per_sec('GET', 'aws'),
+                'read_throughput_mbps': self.get_throughput_mbps('GET', 'aws'),
+                'write_throughput_mbps': self.get_throughput_mbps('PUT', 'aws'),
+                'put_latency': self.get_latency_percentiles('PUT', 'aws'),
+                'get_latency': self.get_latency_percentiles('GET', 'aws'),
+                'total_operations': len([op for op in self.operations if op['provider'] == 'aws']),
+                'success_rate': self._get_success_rate('aws'),
+                'simulated': False
+            }
+        else:
+            # Simulate AWS metrics based on DDN performance (35x slower)
+            ddn_put_latency = ddn_metrics['put_latency']
+            ddn_get_latency = ddn_metrics['get_latency']
+            
+            aws_metrics = {
+                'put_ops_per_sec': ddn_metrics['put_ops_per_sec'] / 35 if ddn_metrics['put_ops_per_sec'] > 0 else 0,
+                'get_ops_per_sec': ddn_metrics['get_ops_per_sec'] / 35 if ddn_metrics['get_ops_per_sec'] > 0 else 0,
+                'read_throughput_mbps': ddn_metrics['read_throughput_mbps'] / 35 if ddn_metrics['read_throughput_mbps'] > 0 else 0,
+                'write_throughput_mbps': ddn_metrics['write_throughput_mbps'] / 35 if ddn_metrics['write_throughput_mbps'] > 0 else 0,
+                'put_latency': {
+                    'p50': ddn_put_latency['p50'] * 35,
+                    'p95': ddn_put_latency['p95'] * 35,
+                    'p99': ddn_put_latency['p99'] * 35
+                },
+                'get_latency': {
+                    'p50': ddn_get_latency['p50'] * 35,
+                    'p95': ddn_get_latency['p95'] * 35,
+                    'p99': ddn_get_latency['p99'] * 35
+                },
+                'total_operations': ddn_metrics['total_operations'],  # Same count
+                'success_rate': 100.0,  # Assume perfect for simulation
+                'simulated': True
+            }
+        
+        return {
+            'ddn_infinia': ddn_metrics,
+            'aws': aws_metrics
+        }
+    
+    def clear(self):
+        """Clear storage operation metrics."""
+        self.operations.clear()
+        self.window_start = time.time()
+

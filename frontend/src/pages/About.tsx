@@ -74,7 +74,311 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
 
   return (
     <div className="about-page">
-      {/* Hero Section */}
+      {/* Business Impact Hero - Leadership Focus */}
+      <section className="relative overflow-hidden" style={{
+        background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%)',
+        minHeight: '100vh'
+      }}>
+        {/* Subtle Grid Background */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
+            backgroundSize: '50px 50px'
+          }}
+        />
+
+        <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-16 md:py-24">
+          {/* Executive Headline */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center mb-16"
+          >
+            <div className="inline-block px-6 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 mb-6">
+              <span className="text-amber-400 text-sm font-semibold tracking-wide">BUSINESS IMPACT</span>
+            </div>
+            <h1
+              className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6"
+              style={{ letterSpacing: '-0.02em', lineHeight: 1.1 }}
+            >
+              Turn AI Infrastructure Into
+              <br />
+              <span className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+                Measurable Business Value
+              </span>
+            </h1>
+            <p className="text-2xl md:text-3xl text-white/70 max-w-4xl mx-auto leading-relaxed">
+              Strategic infrastructure choices for{' '}
+              <span
+                className="text-3xl md:text-4xl font-bold px-3 py-1 rounded-lg"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(118, 185, 0, 0.2), rgba(237, 39, 56, 0.2))',
+                  color: '#76B900',
+                  border: '2px solid rgba(118, 185, 0, 0.4)'
+                }}
+              >
+                RAG Applications
+              </span>{' '}
+              directly impact your bottom line—
+              <span className="text-emerald-400 font-semibold">significantly reducing costs</span> while
+              <span className="text-emerald-400 font-semibold">dramatically accelerating time-to-value</span>
+            </p>
+          </motion.div>
+
+          {/* Three Pillars of Business Value */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="grid md:grid-cols-3 gap-8 mb-20"
+          >
+            {/* Cost Reduction */}
+            <div className="relative group">
+              <div
+                className="h-full p-8 rounded-2xl border transition-all duration-300"
+                style={{
+                  background: 'rgba(16, 185, 129, 0.05)',
+                  borderColor: 'rgba(16, 185, 129, 0.2)',
+                }}
+              >
+                <div className="w-16 h-16 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6">
+                  <BarChart3 className="w-8 h-8 text-emerald-400" />
+                </div>
+                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Cost Reduction</h3>
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <div className="text-5xl md:text-6xl font-bold text-emerald-400 mb-2">Dramatically</div>
+                    <div className="text-xl md:text-2xl text-white/60">lower storage costs</div>
+                  </div>
+                  <div>
+                    <div className="text-5xl md:text-6xl font-bold text-emerald-400 mb-2">Significantly</div>
+                    <div className="text-xl md:text-2xl text-white/60">improved GPU efficiency</div>
+                  </div>
+                </div>
+                <ul className="space-y-3 text-lg md:text-xl text-white/70">
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-1">✓</span>
+                    <span>Eliminate expensive cloud egress fees</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-1">✓</span>
+                    <span>Reduce GPU idle time with faster I/O</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-1">✓</span>
+                    <span>Lower operational overhead</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Revenue Acceleration */}
+            <div className="relative group">
+              <div
+                className="h-full p-8 rounded-2xl border transition-all duration-300"
+                style={{
+                  background: 'rgba(251, 191, 36, 0.05)',
+                  borderColor: 'rgba(251, 191, 36, 0.2)',
+                }}
+              >
+                <div className="w-16 h-16 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6">
+                  <Zap className="w-8 h-8 text-amber-400" />
+                </div>
+                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Revenue Acceleration</h3>
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <div className="text-5xl md:text-6xl font-bold text-amber-400 mb-2">Rapid</div>
+                    <div className="text-xl md:text-2xl text-white/60">time-to-market</div>
+                  </div>
+                  <div>
+                    <div className="text-5xl md:text-6xl font-bold text-amber-400 mb-2">Enhanced</div>
+                    <div className="text-xl md:text-2xl text-white/60">productivity</div>
+                  </div>
+                </div>
+                <ul className="space-y-3 text-lg md:text-xl text-white/70">
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 mt-1">✓</span>
+                    <span>Launch AI products faster</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 mt-1">✓</span>
+                    <span>Improve customer satisfaction with lightning-fast responses</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 mt-1">✓</span>
+                    <span>Enable real-time AI experiences</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Strategic Advantage */}
+            <div className="relative group">
+              <div
+                className="h-full p-8 rounded-2xl border transition-all duration-300"
+                style={{
+                  background: 'rgba(237, 39, 56, 0.05)',
+                  borderColor: 'rgba(237, 39, 56, 0.2)',
+                }}
+              >
+                <div className="w-16 h-16 rounded-xl bg-red-500/10 flex items-center justify-center mb-6">
+                  <Server className="w-8 h-8 text-red-400" />
+                </div>
+                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Competitive Advantage</h3>
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <div className="text-5xl md:text-6xl font-bold text-red-400 mb-2">Exceptional</div>
+                    <div className="text-xl md:text-2xl text-white/60">retrieval speed</div>
+                  </div>
+                  <div>
+                    <div className="text-5xl md:text-6xl font-bold text-red-400 mb-2">Unlimited</div>
+                    <div className="text-xl md:text-2xl text-white/60">scalability</div>
+                  </div>
+                </div>
+                <ul className="space-y-3 text-lg md:text-xl text-white/70">
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400 mt-1">✓</span>
+                    <span>Differentiate with superior AI performance</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400 mt-1">✓</span>
+                    <span>Scale without infrastructure constraints</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400 mt-1">✓</span>
+                    <span>Future-proof AI investments</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* The Challenge & Solution */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-20"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-white text-center mb-12">
+              The AI Infrastructure Challenge
+            </h2>
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Traditional Approach */}
+              <div className="p-8 rounded-2xl bg-red-950/20 border border-red-900/30">
+                <h3 className="text-2xl md:text-3xl font-bold text-red-400 mb-6">❌ Traditional Approach</h3>
+                <ul className="space-y-4 text-lg md:text-xl text-white/70">
+                  <li className="flex items-start gap-3">
+                    <Database className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="text-xl font-semibold text-white">Slow Cloud Storage</div>
+                      <div className="text-base md:text-lg">200-500ms TTFB creates GPU bottlenecks</div>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Cloud className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="text-xl font-semibold text-white">High Egress Costs</div>
+                      <div className="text-base md:text-lg">$0.09/GB adds up fast at enterprise scale</div>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Server className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="text-xl font-semibold text-white">GPU Underutilization</div>
+                      <div className="text-base md:text-lg">Expensive GPUs wait on slow I/O</div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              {/* DDN + NVIDIA Solution */}
+              <div className="p-8 rounded-2xl bg-gradient-to-br from-emerald-950/30 to-blue-950/30 border border-emerald-500/30">
+                <h3 className="text-2xl md:text-3xl font-bold text-emerald-400 mb-6">✓ DDN + NVIDIA Solution</h3>
+                <ul className="space-y-4 text-lg md:text-xl text-white/70">
+                  <li className="flex items-start gap-3">
+                    <Zap className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="text-xl font-semibold text-white">High-Speed INFINIA Storage</div>
+                      <div className="text-base md:text-lg">20-50ms TTFB eliminates bottlenecks</div>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <BarChart3 className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="text-xl font-semibold text-white">Predictable Costs</div>
+                      <div className="text-base md:text-lg">No egress fees, flat pricing model</div>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Search className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="text-xl font-semibold text-white">Maximum GPU Efficiency</div>
+                      <div className="text-base md:text-lg">Keep expensive compute fully utilized</div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* ROI Statement */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center p-12 rounded-2xl bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10 border border-amber-500/20"
+          >
+            <p className="text-2xl md:text-3xl text-white mb-6 leading-relaxed">
+              "The right infrastructure choice today determines whether your AI initiatives
+              <span className="text-amber-400 font-bold"> generate revenue</span> or
+              <span className="text-red-400 font-bold"> drain budgets</span>"
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-6 text-white/60">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                <span>Proven at enterprise scale</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-400"></div>
+                <span>Real-world performance data</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+                <span>Production-ready architecture</span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center mt-16"
+          >
+            {onStartDemo && (
+              <button
+                onClick={onStartDemo}
+                className="group inline-flex items-center gap-3 px-10 py-5 rounded-xl text-2xl md:text-3xl font-semibold transition-all duration-300"
+                style={{
+                  background: 'linear-gradient(135deg, #ED2738 0%, #76B900 100%)',
+                  color: 'white',
+                  boxShadow: '0 10px 40px rgba(237, 39, 56, 0.3)'
+                }}
+              >
+                <span>See the Performance Difference</span>
+                <ArrowRight className="w-6 h-6 md:w-8 md:h-8 group-hover:translate-x-1 transition-transform" />
+              </button>
+            )}
+            <p className="text-white/50 text-lg md:text-xl mt-6">Live demonstration with real-time metrics</p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Original Hero Section */}
       <section className="relative overflow-hidden" style={{ background: '#050508' }}>
         {/* Animated Background Orbs - GPU optimized, isolated for scroll performance */}
         <div
@@ -189,7 +493,7 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             className="text-center mb-6"
           >
             <h1
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2"
+              className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-2"
               style={{ letterSpacing: '-0.03em', lineHeight: 1.1 }}
             >
               Enterprise{' '}
@@ -203,7 +507,7 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
                 RAG Performance
               </span>
             </h1>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white" style={{ letterSpacing: '-0.03em' }}>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white" style={{ letterSpacing: '-0.03em' }}>
               Showcase
             </h2>
           </motion.div>
@@ -213,7 +517,7 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center text-white/70 text-lg md:text-xl max-w-2xl mx-auto mb-12"
+            className="text-center text-white/70 text-xl md:text-2xl max-w-3xl mx-auto mb-12"
             style={{ lineHeight: 1.7 }}
           >
             Compare DDN INFINIA vs Traditional Object Storage performance for production RAG applications.
@@ -348,13 +652,27 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
 
               <path d="M 930 255 L 980 255" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
 
-              {/* LLM Response */}
+              {/* LLM Response - Model Agnostic */}
               <g id="response">
-                <rect x="980" y="200" width="180" height="110" rx="8" fill="url(#nvidiaGradient)" stroke="#76B900" strokeWidth="2" filter="url(#glow)" />
+                <rect x="980" y="180" width="180" height="150" rx="8" fill="url(#nvidiaGradient)" stroke="#76B900" strokeWidth="3" filter="url(#glow)" />
+
+                {/* Model Agnostic Badge */}
+                <rect x="995" y="195" width="150" height="22" rx="4" fill="rgba(255,215,0,0.2)" stroke="#FFD700" strokeWidth="1.5" />
+                <text x="1070" y="210" textAnchor="middle" fill="#FFD700" fontSize="11" fontWeight="bold">🔄 MODEL AGNOSTIC</text>
+
+                {/* Primary Model */}
                 <text x="1070" y="235" textAnchor="middle" fill="#ffffff" fontSize="16" fontWeight="bold">Nemotron 70B</text>
-                <text x="1070" y="258" textAnchor="middle" fill="#ffffff" fontSize="12">LLM Response</text>
-                <rect x="1010" y="270" width="120" height="20" rx="4" fill="rgba(0,0,0,0.3)" />
-                <text x="1070" y="284" textAnchor="middle" fill="#FFD700" fontSize="10" fontWeight="bold">SUB-100MS</text>
+
+                {/* Additional Models */}
+                <text x="1070" y="255" textAnchor="middle" fill="#ffffff" fontSize="11" opacity="0.9">Llama 3.1 • Mixtral</text>
+                <text x="1070" y="270" textAnchor="middle" fill="#ffffff" fontSize="10" opacity="0.7">+ More Models</text>
+
+                {/* LLM Response Label */}
+                <text x="1070" y="290" textAnchor="middle" fill="#ffffff" fontSize="12">LLM Response</text>
+
+                {/* Performance Badge */}
+                <rect x="1010" y="300" width="120" height="20" rx="4" fill="rgba(0,0,0,0.3)" />
+                <text x="1070" y="314" textAnchor="middle" fill="#FFD700" fontSize="10" fontWeight="bold">SUB-100MS</text>
               </g>
 
               {/* User Query Path */}
@@ -482,13 +800,13 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
           <div className="p-6 rounded-xl" style={{ background: 'linear-gradient(135deg, var(--neutral-900) 0%, var(--neutral-800) 100%)' }}>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-2 h-2 rounded-full bg-nvidia-green animate-pulse" />
-              <span className="text-sm font-semibold text-nvidia-green">Data Flow Summary</span>
+              <span className="text-xl md:text-2xl font-semibold text-nvidia-green">Data Flow Summary</span>
             </div>
-            <div className="text-sm text-white/90 leading-relaxed">
+            <div className="text-lg md:text-xl lg:text-2xl text-white/90 leading-relaxed">
               Multi-modal documents → <strong className="text-nvidia-green">NVIDIA NV-Ingest</strong> semantic chunking → <strong className="text-ddn-red">DDN INFINIA</strong> storage
-              <span className="inline-block mx-2 px-2 py-0.5 bg-ddn-red text-white text-xs font-bold rounded">30-40X FASTER</span>
-              → <strong className="text-nvidia-green">NeMo Reranker</strong> + <strong className="text-nvidia-green">Guardrails</strong> → <strong className="text-nvidia-green">Nemotron 70B</strong>
-              <span className="inline-block mx-2 px-2 py-0.5 bg-nvidia-green text-white text-xs font-bold rounded">SUB-100MS</span>
+              <span className="inline-block mx-2 px-3 py-1 bg-ddn-red text-white text-base md:text-lg font-bold rounded">30-40X FASTER</span>
+              → <strong className="text-nvidia-green">NeMo Reranker</strong> + <strong className="text-nvidia-green">Guardrails</strong> → <strong className="text-nvidia-green">Model-Agnostic LLMs</strong> (Nemotron 70B, Llama 3.1, Mixtral)
+              <span className="inline-block mx-2 px-3 py-1 bg-nvidia-green text-white text-base md:text-lg font-bold rounded">SUB-100MS</span>
             </div>
           </div>
         </div>
@@ -554,7 +872,7 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
           {/* Mission Banner */}
           <div className="rounded-xl p-8 text-white" style={{ background: 'linear-gradient(135deg, var(--ddn-red) 0%, var(--ddn-red-hover) 100%)' }}>
             <div className="eyebrow text-white/80 mb-3">Our Mission</div>
-            <p className="text-lg md:text-xl font-medium leading-relaxed">
+            <p className="text-xl md:text-2xl lg:text-3xl font-medium leading-relaxed">
               Demonstrate that DDN INFINIA delivers superior performance for enterprise RAG applications—the optimal choice for production deployments requiring ultra-low latency and maximum throughput.
             </p>
           </div>
@@ -589,11 +907,11 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
                   { name: 'NVIDIA NeMo', desc: 'Reranking, Guardrails, Nemotron 70B' },
                   { name: 'Boto3', desc: 'AWS SDK for S3-compatible storage' }
                 ].map((tech) => (
-                  <li key={tech.name} className="flex items-start gap-3 text-sm">
-                    <span className="w-1.5 h-1.5 bg-ddn-red rounded-full mt-2 flex-shrink-0" />
+                  <li key={tech.name} className="flex items-start gap-3 text-base md:text-lg">
+                    <span className="w-2 h-2 bg-ddn-red rounded-full mt-2 flex-shrink-0" />
                     <div>
-                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{tech.name}</span>
-                      <span style={{ color: 'var(--text-muted)' }}> — {tech.desc}</span>
+                      <span className="font-medium text-lg md:text-xl" style={{ color: 'var(--text-primary)' }}>{tech.name}</span>
+                      <span className="text-base md:text-lg" style={{ color: 'var(--text-muted)' }}> — {tech.desc}</span>
                     </div>
                   </li>
                 ))}
@@ -758,7 +1076,7 @@ function StatCard({ value, label, description }: { value: string; label: string;
       }}
     >
       <div
-        className="text-2xl md:text-3xl font-bold font-mono mb-1"
+        className="text-4xl md:text-5xl lg:text-6xl font-bold font-mono mb-2"
         style={{
           background: 'linear-gradient(135deg, #76B900, #00C280)',
           WebkitBackgroundClip: 'text',
@@ -767,8 +1085,8 @@ function StatCard({ value, label, description }: { value: string; label: string;
       >
         {value}
       </div>
-      <div className="text-white font-medium text-sm">{label}</div>
-      <div className="text-white/50 text-xs mt-1">{description}</div>
+      <div className="text-white font-medium text-lg md:text-xl">{label}</div>
+      <div className="text-white/50 text-base md:text-lg mt-1">{description}</div>
     </div>
   )
 }
@@ -777,8 +1095,8 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
   return (
     <div className="card p-5 hover:shadow-md transition-shadow">
       <div className="text-ddn-red mb-3">{icon}</div>
-      <h4 className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>{title}</h4>
-      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{description}</p>
+      <h4 className="text-xl md:text-2xl font-medium mb-2" style={{ color: 'var(--text-primary)' }}>{title}</h4>
+      <p className="text-base md:text-lg" style={{ color: 'var(--text-muted)' }}>{description}</p>
     </div>
   )
 }
@@ -812,10 +1130,10 @@ function StorageCard({
       >
         {number}
       </div>
-      <h4 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>{title}</h4>
+      <h4 className="text-xl md:text-2xl font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>{title}</h4>
       <ul className="space-y-2">
         {items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <li key={i} className="flex items-start gap-2 text-base md:text-lg" style={{ color: 'var(--text-secondary)' }}>
             <span
               className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
               style={{ backgroundColor: colors[color].hex }}
@@ -857,12 +1175,12 @@ function MetricCard({
 
   return (
     <div className={`card p-5 border-t-4 ${borderColors[color]}`}>
-      <h4 className={`text-sm font-semibold ${colorClasses[color]} uppercase tracking-wide mb-4`}>
+      <h4 className={`text-lg md:text-xl font-semibold ${colorClasses[color]} uppercase tracking-wide mb-4`}>
         {title}
       </h4>
       <ul className="space-y-3">
         {items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <li key={i} className="flex items-start gap-2 text-base md:text-lg" style={{ color: 'var(--text-secondary)' }}>
             <span className={`w-1.5 h-1.5 ${dotColors[color]} rounded-full mt-2 flex-shrink-0`} />
             {item}
           </li>
@@ -889,7 +1207,7 @@ function ProviderBadge({
         className="w-2.5 h-2.5 rounded-full"
         style={{ backgroundColor: color }}
       />
-      <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{name}</span>
+      <span className="text-lg md:text-xl font-medium" style={{ color: 'var(--text-primary)' }}>{name}</span>
     </div>
   )
 }

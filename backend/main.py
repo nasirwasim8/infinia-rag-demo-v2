@@ -12,6 +12,7 @@ from app.api.routes import (
     rag_router,
     metrics_router,
     ingestion_router,
+    benchmarks_router,
     health_router
 )
 
@@ -40,6 +41,7 @@ app.include_router(documents_router, prefix="/api")
 app.include_router(rag_router, prefix="/api")
 app.include_router(metrics_router, prefix="/api")
 app.include_router(ingestion_router, prefix="/api")
+app.include_router(benchmarks_router, prefix="/api")
 
 
 @app.get("/")

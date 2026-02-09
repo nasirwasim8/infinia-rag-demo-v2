@@ -341,7 +341,7 @@ export default function ChatPage() {
             {/* Performance metrics */}
             <div className="card p-5">
               <h3 className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-4">Performance Metrics</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
                 <div>
                   <div className="text-xs text-neutral-500 mb-1">Total Time</div>
                   <div className="text-lg font-semibold text-neutral-900 font-mono">{((response.total_time_ms ?? 0) / 1000).toFixed(1)}s</div>
@@ -352,8 +352,16 @@ export default function ChatPage() {
                   <div className="text-lg font-semibold text-ddn-red font-mono">{(response.storage_ttfb?.ddn_infinia ?? 0).toFixed(0)}ms</div>
                 </div>
                 <div>
+                  <div className="text-xs text-neutral-500 mb-1">DDN Total</div>
+                  <div className="text-lg font-semibold text-ddn-red font-mono">{(response.total_query_time?.ddn_infinia ?? 0).toFixed(0)}ms</div>
+                </div>
+                <div>
                   <div className="text-xs text-neutral-500 mb-1">AWS TTFB</div>
                   <div className="text-lg font-semibold text-neutral-500 font-mono">{(response.storage_ttfb?.aws ?? 0).toFixed(0)}ms</div>
+                </div>
+                <div>
+                  <div className="text-xs text-neutral-500 mb-1">AWS Total</div>
+                  <div className="text-lg font-semibold text-neutral-500 font-mono">{(response.total_query_time?.aws ?? 0).toFixed(0)}ms</div>
                 </div>
                 <div>
                   <div className="text-xs text-neutral-500 mb-1">Winner</div>

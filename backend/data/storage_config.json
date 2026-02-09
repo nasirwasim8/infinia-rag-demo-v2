@@ -1,1 +1,16 @@
-{}
+{
+  "ddn_infinia": {
+    "access_key": "",
+    "secret_key": "",
+    "bucket_name": "",
+    "region": "",
+    "endpoint_url": ""
+  },
+  "aws": {
+    "access_key": "",
+    "secret_key": "",
+    "bucket_name": "",
+    "region": "",
+    "endpoint_url": ""
+  }
+}

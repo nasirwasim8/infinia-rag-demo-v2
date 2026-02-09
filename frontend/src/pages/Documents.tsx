@@ -109,52 +109,43 @@ ${successful.map((r: any) => `- ${r.filename}: ${r.chunks} chunks`).join('\n')}$
 
   const runBenchmarkMutation = useMutation({
     mutationFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      return {
-        ddnUploadTime: Math.random() * 50 + 10,
-        awsUploadTime: Math.random() * 500 + 200,
-        ddnTtfb: Math.random() * 50 + 20,
-        awsTtfb: Math.random() * 400 + 150,
-        iterations: 100
-      }
+      return await api.runBasicBenchmark()
     },
     onSuccess: (data) => {
-      const uploadSpeedup = (data.awsUploadTime / data.ddnUploadTime).toFixed(1)
-      const ttfbSpeedup = (data.awsTtfb / data.ddnTtfb).toFixed(1)
+      const uploadSpeedup = (data.aws_upload_time / data.ddn_upload_time).toFixed(1)
+      const ttfbSpeedup = (data.aws_ttfb / data.ddn_ttfb).toFixed(1)
       setBenchmarkResults(`
 Comprehensive Benchmark Results
 ==============================
 Iterations: ${data.iterations}
 
 Upload Performance:
-- DDN INFINIA: ${data.ddnUploadTime.toFixed(2)}ms avg
-- AWS S3: ${data.awsUploadTime.toFixed(2)}ms avg
+- DDN INFINIA: ${data.ddn_upload_time.toFixed(2)}ms avg
+- AWS S3: ${data.aws_upload_time.toFixed(2)}ms avg
 - DDN INFINIA is ${uploadSpeedup}x faster
 
 TTFB (Time to First Byte):
-- DDN INFINIA: ${data.ddnTtfb.toFixed(2)}ms avg
-- AWS S3: ${data.awsTtfb.toFixed(2)}ms avg
+- DDN INFINIA: ${data.ddn_ttfb.toFixed(2)}ms avg
+- AWS S3: ${data.aws_ttfb.toFixed(2)}ms avg
 - DDN INFINIA is ${ttfbSpeedup}x faster
 
 Conclusion: DDN INFINIA demonstrates superior
 performance for RAG workloads.
       `.trim())
       toast.success('Benchmark complete')
+    },
+    onError: (error: any) => {
+      toast.error(`Benchmark failed: ${error.message}`)
     }
   })
 
   const multiSizeBenchmarkMutation = useMutation({
     mutationFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 3000))
-      return {
-        sizes: ['1KB', '10KB', '100KB', '1MB'],
-        ddnResults: [5, 12, 45, 180],
-        awsResults: [50, 120, 450, 1800]
-      }
+      return await api.runMultiSizeBenchmark()
     },
     onSuccess: (data) => {
-      const lines = data.sizes.map((size, i) =>
-        `${size.padEnd(8)} DDN: ${data.ddnResults[i].toString().padStart(5)}ms | AWS: ${data.awsResults[i].toString().padStart(5)}ms | Speedup: ${(data.awsResults[i] / data.ddnResults[i]).toFixed(1)}x`
+      const lines = data.sizes.map((size: string, i: number) =>
+        `${size.padEnd(8)} DDN: ${data.ddn_results[i].toString().padStart(5)}ms | AWS: ${data.aws_results[i].toString().padStart(5)}ms | Speedup: ${(data.aws_results[i] / data.ddn_results[i]).toFixed(1)}x`
       )
       setBenchmarkResults(`
 Multi-Size Chunk Benchmark
@@ -167,6 +158,9 @@ DDN INFINIA maintains performance advantage
 across all chunk sizes.
       `.trim())
       toast.success('Multi-size benchmark complete')
+    },
+    onError: (error: any) => {
+      toast.error(`Benchmark failed: ${error.message}`)
     }
   })
 

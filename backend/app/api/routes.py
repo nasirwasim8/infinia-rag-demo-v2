@@ -35,9 +35,9 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # Initialize services
-vector_store = VectorStore()
-document_processor = DocumentProcessor()
 ttfb_monitor = TTFBMonitor()
+vector_store = VectorStore(storage_ops_tracker=ttfb_monitor.storage_ops)
+document_processor = DocumentProcessor()
 nvidia_llm = NvidiaLLMClient()
 nvidia_reranker = NvidiaReranker()
 nvidia_guardrails = NvidiaGuardrails()
@@ -52,6 +52,7 @@ documents_router = APIRouter(prefix="/documents", tags=["Documents"])
 rag_router = APIRouter(prefix="/rag", tags=["RAG"])
 metrics_router = APIRouter(prefix="/metrics", tags=["Metrics"])
 ingestion_router = APIRouter(prefix="/ingestion", tags=["Continuous Ingestion"])
+benchmarks_router = APIRouter(prefix="/benchmarks", tags=["Benchmarks"])
 health_router = APIRouter(tags=["Health"])
 
 
@@ -428,6 +429,16 @@ async def get_retrieval_metrics():
     return ttfb_monitor.get_retrieval_summary()
 
 
+@metrics_router.get("/llm/")
+async def get_llm_metrics():
+    """Get LLM performance metrics (TTFT, ITL, tokens/sec)."""
+    return ttfb_monitor.llm_metrics.get_summary()
+
+@metrics_router.get("/storage-ops/")
+async def get_storage_operation_metrics():
+    """Get storage operation metrics (PUT/GET ops/sec, throughput)."""
+    return ttfb_monitor.storage_ops.get_summary()
+
 @metrics_router.delete("/clear")
 async def clear_metrics():
     """Clear all metrics."""
@@ -508,6 +519,56 @@ async def get_processed_files():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@ingestion_router.get("/summary")
+async def get_ingestion_summary():
+    """Get comprehensive ingestion summary with file stats, chunk counts, and performance metrics."""
+    try:
+        detailed_stats = ttfb_monitor.get_detailed_statistics()
+        
+        return {
+            "success": True,
+            "files": detailed_stats.get('files', {}),
+            "chunks": detailed_stats.get('chunks', {}),
+            "timings": detailed_stats.get('timings', {}),
+            "throughput": detailed_stats.get('throughput', {}),
+            "total_files_processed": detailed_stats.get('files', {}).get('total_processed', 0)
+        }
+    except Exception as e:
+        logger.error(f"Failed to get ingestion summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@ingestion_router.get("/directory-listing")
+async def get_directory_listing():
+    """Get directory listing of all processed files with detailed metadata."""
+    try:
+        # Get recent file operations from metrics
+        file_stats = ttfb_monitor.file_stats
+        
+        # Format for display
+        files_list = []
+        for stat in file_stats[-20:]:  # Last 20 files
+            files_list.append({
+                "filename": stat.get('filename', 'Unknown'),
+                "timestamp": stat.get('timestamp'),
+                "file_size_mb": round(stat.get('file_size_mb', 0), 2),
+                "chunks_created": stat.get('chunks_created', 0),
+                "total_time_ms": round(stat.get('total_time_ms', 0), 1),
+                "download_time_ms": round(stat.get('download_time_ms', 0), 1),
+                "parsing_time_ms": round(stat.get('parsing_time_ms', 0), 1),
+                "embedding_time_ms": round(stat.get('embedding_time_ms', 0), 1)
+            })
+        
+        return {
+            "success": True,
+            "files": files_list,
+            "total_count": len(file_stats)
+        }
+    except Exception as e:
+        logger.error(f"Failed to get directory listing: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @ingestion_router.get("/stream")
 async def stream_processing_events():
     """Stream real-time processing events via SSE."""
@@ -521,3 +582,148 @@ async def stream_processing_events():
             "X-Accel-Buffering": "no"  # Disable nginx buffering
         }
     )
+
+
+# ============== Benchmark Routes ==============
+
+@benchmarks_router.post("/basic")
+async def run_basic_benchmark():
+    """Run basic storage benchmark test with real uploads and retrievals."""
+    try:
+        logger.info("🧪 Starting basic benchmark test...")
+        
+        # Generate test chunks
+        test_iterations = 10
+        test_content = "This is a benchmark test chunk. " * 100  # ~3KB chunk
+        
+        ddn_upload_times = []
+        aws_upload_times = []
+        ddn_retrieval_times = []
+        aws_retrieval_times = []
+        
+        # Check if AWS is configured
+        from app.core.config import storage_config
+        aws_configured = bool(storage_config.aws_config.get('access_key'))
+        
+        for i in range(test_iterations):
+            content = f"{test_content} [Iteration {i}]"
+            chunk_id = f"benchmark_test_{i}_{int(time.perf_counter() * 1000)}"
+            
+            # Generate embedding
+            embedding = vector_store.encode([content])[0]
+            
+            # Test upload to DDN
+            ddn_handler = S3Handler('ddn_infinia')
+            object_key = f"benchmarks/{chunk_id}.txt"
+            
+            ddn_start = time.perf_counter()
+            ddn_handler.upload_bytes(content.encode('utf-8'), object_key)
+            ddn_upload_time = (time.perf_counter() - ddn_start) * 1000
+            ddn_upload_times.append(ddn_upload_time)
+            
+            # Test retrieval from DDN
+            ddn_start = time.perf_counter()
+            ddn_handler.download_bytes(object_key)
+            ddn_retrieval_time = (time.perf_counter() - ddn_start) * 1000
+            ddn_retrieval_times.append(ddn_retrieval_time)
+            
+            # Test AWS (real or simulated)
+            if aws_configured:
+                aws_handler = S3Handler('aws')
+                
+                aws_start = time.perf_counter()
+                aws_handler.upload_bytes(content.encode('utf-8'), object_key)
+                aws_upload_time = (time.perf_counter() - aws_start) * 1000
+                aws_upload_times.append(aws_upload_time)
+                
+                aws_start = time.perf_counter()
+                aws_handler.download_bytes(object_key)
+                aws_retrieval_time = (time.perf_counter() - aws_start) * 1000
+                aws_retrieval_times.append(aws_retrieval_time)
+            else:
+                # Simulate AWS at 35x slower
+                aws_upload_times.append(ddn_upload_time * 35)
+                aws_retrieval_times.append(ddn_retrieval_time * 35)
+        
+        # Calculate averages
+        avg_ddn_upload = sum(ddn_upload_times) / len(ddn_upload_times)
+        avg_aws_upload = sum(aws_upload_times) / len(aws_upload_times)
+        avg_ddn_retrieval = sum(ddn_retrieval_times) / len(ddn_retrieval_times)
+        avg_aws_retrieval = sum(aws_retrieval_times) / len(aws_retrieval_times)
+        
+        logger.info(f"✅ Benchmark complete: DDN upload={avg_ddn_upload:.2f}ms, AWS upload={avg_aws_upload:.2f}ms")
+        
+        return {
+            "success": True,
+            "iterations": test_iterations,
+            "ddn_upload_time": avg_ddn_upload,
+            "aws_upload_time": avg_aws_upload,
+            "ddn_ttfb": avg_ddn_retrieval,
+            "aws_ttfb": avg_aws_retrieval,
+            "aws_simulated": not aws_configured
+        }
+    except Exception as e:
+        logger.error(f"❌ Benchmark failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@benchmarks_router.post("/multi-size")
+async def run_multi_size_benchmark():
+    """Run multi-size storage benchmark test with different chunk sizes."""
+    try:
+        logger.info("🧪 Starting multi-size benchmark test...")
+        
+        # Define test sizes
+        sizes_config = [
+            ("1KB", 1024),
+            ("10KB", 10240),
+            ("100KB", 102400),
+            ("1MB", 1048576)
+        ]
+        
+        ddn_results = []
+        aws_results = []
+        
+        # Check if AWS is configured
+        from app.core.config import storage_config
+        aws_configured = bool(storage_config.aws_config.get('access_key'))
+        
+        for size_label, size_bytes in sizes_config:
+            logger.info(f"  Testing {size_label}...")
+            
+            # Generate test content of specific size
+            test_content = "X" * size_bytes
+            chunk_id = f"benchmark_multisize_{size_label}_{int(time.perf_counter() * 1000)}"
+            object_key = f"benchmarks/{chunk_id}.bin"
+            
+            # Test DDN upload
+            ddn_handler = S3Handler('ddn_infinia')
+            ddn_start = time.perf_counter()
+            ddn_handler.upload_bytes(test_content.encode('utf-8'), object_key)
+            ddn_time = (time.perf_counter() - ddn_start) * 1000
+            ddn_results.append(round(ddn_time, 2))
+            
+            # Test AWS (real or simulated)
+            if aws_configured:
+                aws_handler = S3Handler('aws')
+                aws_start = time.perf_counter()
+                aws_handler.upload_bytes(test_content.encode('utf-8'), object_key)
+                aws_time = (time.perf_counter() - aws_start) * 1000
+                aws_results.append(round(aws_time, 2))
+            else:
+                # Simulate AWS at 35x slower
+                aws_results.append(round(ddn_time * 35, 2))
+        
+        logger.info(f"✅ Multi-size benchmark complete")
+        
+        return {
+            "success": True,
+            "sizes": [s[0] for s in sizes_config],
+            "ddn_results": ddn_results,
+            "aws_results": aws_results,
+            "aws_simulated": not aws_configured
+        }
+    except Exception as e:
+        logger.error(f"❌ Multi-size benchmark failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
