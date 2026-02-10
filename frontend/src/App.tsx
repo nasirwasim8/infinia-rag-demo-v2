@@ -125,7 +125,7 @@ function App() {
                       DDN INFINIA RAG Performance Demo
                     </p>
                     <p className="text-[12px] text-text-muted mt-1">
-                      Fast Object + FastAPI + React + NVIDIA NeMo • <span className="font-medium">v2.1.1</span>
+                      Fast Object + FastAPI + React + NVIDIA NeMo • <span className="font-medium">v2.1.5</span>
                     </p>
                   </footer>
                 </div>

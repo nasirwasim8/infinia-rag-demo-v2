@@ -88,19 +88,19 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
           }}
         />
 
-        <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-16 md:py-24">
+        <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-8 md:py-12">
           {/* Executive Headline */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-16"
+            className="text-center mb-8"
           >
             <div className="inline-block px-6 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 mb-6">
               <span className="text-amber-400 text-sm font-semibold tracking-wide">BUSINESS IMPACT</span>
             </div>
             <h1
-              className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6"
+              className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4"
               style={{ letterSpacing: '-0.02em', lineHeight: 1.1 }}
             >
               Turn AI Infrastructure Into
@@ -109,10 +109,10 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
                 Measurable Business Value
               </span>
             </h1>
-            <p className="text-2xl md:text-3xl text-white/70 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-white/70 max-w-4xl mx-auto leading-relaxed">
               Strategic infrastructure choices for{' '}
               <span
-                className="text-3xl md:text-4xl font-bold px-3 py-1 rounded-lg"
+                className="text-xl md:text-2xl font-bold px-2 py-0.5 rounded-lg"
                 style={{
                   background: 'linear-gradient(135deg, rgba(118, 185, 0, 0.2), rgba(237, 39, 56, 0.2))',
                   color: '#76B900',
@@ -132,32 +132,32 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="grid md:grid-cols-3 gap-8 mb-20"
+            className="grid md:grid-cols-3 gap-4 mb-8"
           >
             {/* Cost Reduction */}
             <div className="relative group">
               <div
-                className="h-full p-8 rounded-2xl border transition-all duration-300"
+                className="h-full p-4 rounded-2xl border transition-all duration-300"
                 style={{
                   background: 'rgba(16, 185, 129, 0.05)',
                   borderColor: 'rgba(16, 185, 129, 0.2)',
                 }}
               >
-                <div className="w-16 h-16 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6">
-                  <BarChart3 className="w-8 h-8 text-emerald-400" />
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-3">
+                  <BarChart3 className="w-6 h-6 text-emerald-400" />
                 </div>
-                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Cost Reduction</h3>
-                <div className="space-y-4 mb-6">
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-3">Cost Reduction</h3>
+                <div className="space-y-2 mb-4">
                   <div>
-                    <div className="text-5xl md:text-6xl font-bold text-emerald-400 mb-2">Dramatically</div>
-                    <div className="text-xl md:text-2xl text-white/60">lower storage costs</div>
+                    <div className="text-2xl md:text-3xl font-bold text-emerald-400 mb-1">Dramatically</div>
+                    <div className="text-sm md:text-base text-white/60">lower storage costs</div>
                   </div>
                   <div>
-                    <div className="text-5xl md:text-6xl font-bold text-emerald-400 mb-2">Significantly</div>
-                    <div className="text-xl md:text-2xl text-white/60">improved GPU efficiency</div>
+                    <div className="text-2xl md:text-3xl font-bold text-emerald-400 mb-1">Significantly</div>
+                    <div className="text-sm md:text-base text-white/60">improved GPU efficiency</div>
                   </div>
                 </div>
-                <ul className="space-y-3 text-lg md:text-xl text-white/70">
+                <ul className="space-y-2 text-sm md:text-base text-white/70">
                   <li className="flex items-start gap-2">
                     <span className="text-emerald-400 mt-1">✓</span>
                     <span>Eliminate expensive cloud egress fees</span>
@@ -177,27 +177,27 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             {/* Revenue Acceleration */}
             <div className="relative group">
               <div
-                className="h-full p-8 rounded-2xl border transition-all duration-300"
+                className="h-full p-4 rounded-2xl border transition-all duration-300"
                 style={{
                   background: 'rgba(251, 191, 36, 0.05)',
                   borderColor: 'rgba(251, 191, 36, 0.2)',
                 }}
               >
-                <div className="w-16 h-16 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6">
-                  <Zap className="w-8 h-8 text-amber-400" />
+                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-3">
+                  <Zap className="w-6 h-6 text-amber-400" />
                 </div>
-                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Revenue Acceleration</h3>
-                <div className="space-y-4 mb-6">
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-3">Revenue Acceleration</h3>
+                <div className="space-y-2 mb-4">
                   <div>
-                    <div className="text-5xl md:text-6xl font-bold text-amber-400 mb-2">Rapid</div>
-                    <div className="text-xl md:text-2xl text-white/60">time-to-market</div>
+                    <div className="text-2xl md:text-3xl font-bold text-amber-400 mb-1">Rapid</div>
+                    <div className="text-sm md:text-base text-white/60">time-to-market</div>
                   </div>
                   <div>
-                    <div className="text-5xl md:text-6xl font-bold text-amber-400 mb-2">Enhanced</div>
-                    <div className="text-xl md:text-2xl text-white/60">productivity</div>
+                    <div className="text-2xl md:text-3xl font-bold text-amber-400 mb-1">Enhanced</div>
+                    <div className="text-sm md:text-base text-white/60">productivity</div>
                   </div>
                 </div>
-                <ul className="space-y-3 text-lg md:text-xl text-white/70">
+                <ul className="space-y-2 text-sm md:text-base text-white/70">
                   <li className="flex items-start gap-2">
                     <span className="text-amber-400 mt-1">✓</span>
                     <span>Launch AI products faster</span>
@@ -217,27 +217,27 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             {/* Strategic Advantage */}
             <div className="relative group">
               <div
-                className="h-full p-8 rounded-2xl border transition-all duration-300"
+                className="h-full p-4 rounded-2xl border transition-all duration-300"
                 style={{
                   background: 'rgba(237, 39, 56, 0.05)',
                   borderColor: 'rgba(237, 39, 56, 0.2)',
                 }}
               >
-                <div className="w-16 h-16 rounded-xl bg-red-500/10 flex items-center justify-center mb-6">
-                  <Server className="w-8 h-8 text-red-400" />
+                <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-3">
+                  <Server className="w-6 h-6 text-red-400" />
                 </div>
-                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Competitive Advantage</h3>
-                <div className="space-y-4 mb-6">
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-3">Competitive Advantage</h3>
+                <div className="space-y-2 mb-4">
                   <div>
-                    <div className="text-5xl md:text-6xl font-bold text-red-400 mb-2">Exceptional</div>
-                    <div className="text-xl md:text-2xl text-white/60">retrieval speed</div>
+                    <div className="text-2xl md:text-3xl font-bold text-red-400 mb-1">Exceptional</div>
+                    <div className="text-sm md:text-base text-white/60">retrieval speed</div>
                   </div>
                   <div>
-                    <div className="text-5xl md:text-6xl font-bold text-red-400 mb-2">Unlimited</div>
-                    <div className="text-xl md:text-2xl text-white/60">scalability</div>
+                    <div className="text-2xl md:text-3xl font-bold text-red-400 mb-1">Unlimited</div>
+                    <div className="text-sm md:text-base text-white/60">scalability</div>
                   </div>
                 </div>
-                <ul className="space-y-3 text-lg md:text-xl text-white/70">
+                <ul className="space-y-2 text-sm md:text-base text-white/70">
                   <li className="flex items-start gap-2">
                     <span className="text-red-400 mt-1">✓</span>
                     <span>Differentiate with superior AI performance</span>
@@ -254,7 +254,24 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
               </div>
             </div>
           </motion.div>
+        </div>
+      </section>
 
+      {/* The AI Infrastructure Challenge Section - Separate Slide */}
+      <section className="relative overflow-hidden" style={{
+        background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%)',
+        minHeight: '100vh'
+      }}>
+        {/* Subtle Grid Background */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
+            backgroundSize: '50px 50px'
+          }}
+        />
+
+        <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-16 md:py-24">
           {/* The Challenge & Solution */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -531,10 +548,10 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             transition={{ duration: 0.4, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
             className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto"
           >
-            <StatCard value="30-40x" label="Faster Upload" description="vs Traditional Storage" />
-            <StatCard value="10-20x" label="Faster TTFB" description="Time to First Byte" />
-            <StatCard value="<100ms" label="Response Time" description="End-to-end RAG" />
-            <StatCard value="70B" label="Nemotron LLM" description="NVIDIA NeMo" />
+            <StatCard value="Faster" label="Upload Speed" description="vs Traditional Storage" />
+            <StatCard value="Lower" label="Latency" description="Time to First Byte" />
+            <StatCard value="Sub-second" label="Response Time" description="End-to-end RAG" />
+            <StatCard value="Advanced" label="LLM Models" description="NVIDIA NeMo" />
           </motion.div>
         </div>
       </section>
@@ -684,8 +701,8 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
                 <rect x="20" y="190" width="140" height="100" rx="8" fill="#2a2a2a" stroke="#E31B23" strokeWidth="2" />
                 <text x="90" y="215" textAnchor="middle" fill="#ffffff" fontSize="12" fontWeight="bold">Performance</text>
                 <text x="90" y="235" textAnchor="middle" fill="#E31B23" fontSize="10">DDN INFINIA</text>
-                <text x="90" y="253" textAnchor="middle" fill="#00C280" fontSize="9">30-40x Faster Upload</text>
-                <text x="90" y="270" textAnchor="middle" fill="#00C280" fontSize="9">10-20x Faster TTFB</text>
+                <text x="90" y="253" textAnchor="middle" fill="#00C280" fontSize="9">Faster Upload Speed</text>
+                <text x="90" y="270" textAnchor="middle" fill="#00C280" fontSize="9">Lower Latency</text>
                 <text x="90" y="287" textAnchor="middle" fill="#888888" fontSize="8">vs Traditional Storage</text>
               </g>
 
@@ -804,9 +821,9 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             </div>
             <div className="text-lg md:text-xl lg:text-2xl text-white/90 leading-relaxed">
               Multi-modal documents → <strong className="text-nvidia-green">NVIDIA NV-Ingest</strong> semantic chunking → <strong className="text-ddn-red">DDN INFINIA</strong> storage
-              <span className="inline-block mx-2 px-3 py-1 bg-ddn-red text-white text-base md:text-lg font-bold rounded">30-40X FASTER</span>
+              <span className="inline-block mx-2 px-3 py-1 bg-ddn-red text-white text-base md:text-lg font-bold rounded">SIGNIFICANTLY FASTER</span>
               → <strong className="text-nvidia-green">NeMo Reranker</strong> + <strong className="text-nvidia-green">Guardrails</strong> → <strong className="text-nvidia-green">Model-Agnostic LLMs</strong> (Nemotron 70B, Llama 3.1, Mixtral)
-              <span className="inline-block mx-2 px-3 py-1 bg-nvidia-green text-white text-base md:text-lg font-bold rounded">SUB-100MS</span>
+              <span className="inline-block mx-2 px-3 py-1 bg-nvidia-green text-white text-base md:text-lg font-bold rounded">SUB-SECOND</span>
             </div>
           </div>
         </div>
@@ -1076,7 +1093,7 @@ function StatCard({ value, label, description }: { value: string; label: string;
       }}
     >
       <div
-        className="text-4xl md:text-5xl lg:text-6xl font-bold font-mono mb-2"
+        className="text-2xl md:text-3xl lg:text-4xl font-bold font-mono mb-2"
         style={{
           background: 'linear-gradient(135deg, #76B900, #00C280)',
           WebkitBackgroundClip: 'text',

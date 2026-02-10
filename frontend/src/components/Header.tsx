@@ -72,7 +72,7 @@ export default function Header({ tabs, activeTab, onTabChange }: HeaderProps) {
                   letterSpacing: '0.05em'
                 }}
               >
-                BUILD:
+                BUILD.DDN:
               </span>
               <span
                 className="text-[13px] tracking-wide"
@@ -105,37 +105,37 @@ export default function Header({ tabs, activeTab, onTabChange }: HeaderProps) {
             {/* GPU/CPU Indicator */}
             {health && (
               <div
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full"
                 style={{
                   background: health.gpu_available
                     ? (theme === 'dark'
-                      ? 'linear-gradient(135deg, rgba(0, 150, 0, 0.15) 0%, rgba(50, 200, 50, 0.1) 100%)'
-                      : 'linear-gradient(135deg, rgba(0, 150, 0, 0.08) 0%, rgba(50, 200, 50, 0.05) 100%)')
+                      ? 'linear-gradient(135deg, rgba(0, 150, 0, 0.2) 0%, rgba(50, 200, 50, 0.15) 100%)'
+                      : 'linear-gradient(135deg, rgba(0, 150, 0, 0.12) 0%, rgba(50, 200, 50, 0.08) 100%)')
                     : (theme === 'dark'
-                      ? 'linear-gradient(135deg, rgba(100, 100, 100, 0.15) 0%, rgba(150, 150, 150, 0.1) 100%)'
-                      : 'linear-gradient(135deg, rgba(100, 100, 100, 0.08) 0%, rgba(150, 150, 150, 0.05) 100%)'),
+                      ? 'linear-gradient(135deg, rgba(100, 100, 100, 0.2) 0%, rgba(150, 150, 150, 0.15) 100%)'
+                      : 'linear-gradient(135deg, rgba(100, 100, 100, 0.12) 0%, rgba(150, 150, 150, 0.08) 100%)'),
                   border: health.gpu_available
-                    ? (theme === 'dark' ? '1px solid rgba(0, 200, 0, 0.3)' : '1px solid rgba(0, 180, 0, 0.25)')
-                    : (theme === 'dark' ? '1px solid rgba(150, 150, 150, 0.2)' : '1px solid rgba(120, 120, 120, 0.2)'),
+                    ? (theme === 'dark' ? '2px solid rgba(0, 200, 0, 0.4)' : '2px solid rgba(0, 180, 0, 0.35)')
+                    : (theme === 'dark' ? '2px solid rgba(150, 150, 150, 0.3)' : '2px solid rgba(120, 120, 120, 0.25)'),
                   boxShadow: theme === 'dark'
-                    ? '0 2px 6px rgba(0, 0, 0, 0.2)'
-                    : '0 2px 6px rgba(0, 0, 0, 0.06)',
+                    ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                    : '0 4px 12px rgba(0, 0, 0, 0.1)',
                 }}
                 title={health.gpu_available
                   ? `GPU: ${health.gpu_names[0] || 'Unknown'} (CUDA ${health.cuda_version})`
                   : 'Running on CPU'}
               >
                 {health.gpu_available ? (
-                  <Zap className="w-3.5 h-3.5" style={{ color: 'rgb(0, 180, 0)' }} />
+                  <Zap className="w-5 h-5" style={{ color: 'rgb(0, 180, 0)' }} />
                 ) : (
-                  <Cpu className="w-3.5 h-3.5" style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }} />
+                  <Cpu className="w-5 h-5" style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)' }} />
                 )}
                 <span
-                  className="text-[10px] font-bold uppercase tracking-wide"
+                  className="text-sm md:text-base font-bold uppercase tracking-wide"
                   style={{
                     color: health.gpu_available
                       ? 'rgb(0, 160, 0)'
-                      : (theme === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)')
+                      : (theme === 'dark' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)')
                   }}
                 >
                   {health.gpu_available ? 'GPU' : 'CPU'}
