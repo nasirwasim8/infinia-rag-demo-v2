@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO)
 class VectorStore:
     """FAISS-based vector store with AWS S3 and DDN INFINIA storage."""
 
-    def __init__(self, embedding_model_name: str = None, providers: List[str] = None):
+    def __init__(self, embedding_model_name: str = None, providers: List[str] = None, storage_ops_tracker=None):
         self.model_name = embedding_model_name or settings.embedding_model
         # Auto-detect GPU
         try:
@@ -57,6 +57,9 @@ class VectorStore:
         
         self.providers = providers or self.active_providers
         self.storage_handlers = {p: S3Handler(p) for p in self.providers if p != 'aws' or self.aws_configured}
+        
+        # NEW: Storage operations tracker for metrics
+        self.storage_ops_tracker = storage_ops_tracker
 
     def _generate_chunk_id(self, content: str) -> str:
         """Generate unique chunk ID based on content hash."""
@@ -122,32 +125,14 @@ class VectorStore:
 
             results['stored_chunks'] += 1
 
-        # Calculate average times and add AWS simulation if needed
-        from app.core.config import storage_config
-        aws_configured = bool(storage_config.aws_config.get('access_key'))
-        
+        # Calculate average times for each provider
         for provider in self.providers:
             times = results['provider_performance'][provider]['times']
             if times:
                 results['provider_performance'][provider]['avg_time'] = sum(times) / len(times)
                 results['provider_performance'][provider]['total_time'] = sum(times)
         
-        # If AWS not configured, add simulated metrics
-        if not aws_configured and 'ddn_infinia' in results['provider_performance']:
-            ddn_perf = results['provider_performance']['ddn_infinia']
-            if ddn_perf.get('avg_time'):
-                # Simulate AWS being 35x slower than DDN
-                simulated_aws_time = ddn_perf['avg_time'] * 35
-                results['provider_performance']['aws'] = {
-                    'success': results['stored_chunks'],
-                    'failed': 0,
-                    'times': [simulated_aws_time] * results['stored_chunks'],
-                    'avg_time': simulated_aws_time,
-                    'total_time': simulated_aws_time * results['stored_chunks'],
-                    'simulated': True
-                }
-                results['aws_simulated'] = True
-                results['simulation_note'] = 'AWS metrics simulated based on standard S3 benchmarks (35x slower than DDN INFINIA)'
+        # NO SIMULATION: Only show real AWS data when credentials are configured
 
         logger.info(f"✅ Successfully added {results['stored_chunks']} chunks")
         logger.info(f"   Index size AFTER: {self.index.ntotal} chunks")
@@ -165,18 +150,29 @@ class VectorStore:
 
         chunk_bytes = pickle.dumps(chunk_data)
         object_key = f"chunks/{chunk_id}.pkl"
+        bytes_size = len(chunk_bytes)  # Track size for metrics
 
         results = {}
         for provider in self.providers:
             start_time = time.perf_counter()
             handler = self.storage_handlers[provider]
             success, message = handler.upload_bytes(chunk_bytes, object_key)
-            elapsed = time.perf_counter() - start_time
+            latency_ms = (time.perf_counter() - start_time) * 1000
+
+            # Track storage operation metrics
+            if self.storage_ops_tracker:
+                self.storage_ops_tracker.track_operation(
+                    op_type='PUT',
+                    provider=provider,
+                    bytes_transferred=bytes_size,
+                    latency_ms=latency_ms,
+                    success=success
+                )
 
             results[provider] = {
                 'success': success,
                 'message': message,
-                'time': elapsed,
+                'time': latency_ms / 1000,  # Keep as seconds for backward compatibility
                 'object_key': object_key
             }
 
@@ -293,18 +289,8 @@ class VectorStore:
             
             logger.info(f"   {provider}: Connection={connection_time:.2f}ms, Download={download_time:.2f}ms, Total={total_time:.2f}ms for {len(chunk_ids)} chunks")
 
-        # If AWS not configured, add simulated timing
-        if not aws_configured and 'ddn_infinia' in provider_times:
-            ddn_download = provider_times['ddn_infinia']['download_ms']
-            ddn_connection = provider_times['ddn_infinia']['connection_ms']
-            
-            # Simulate AWS being 35x slower for downloads, similar connection time
-            provider_times['aws'] = {
-                'connection_ms': ddn_connection,
-                'download_ms': ddn_download * 35,
-                'total_ms': ddn_connection + (ddn_download * 35)
-            }
-            logger.info(f"   aws (simulated): Connection={ddn_connection:.2f}ms, Download={ddn_download * 35:.2f}ms")
+        # NO SIMULATION: Only use real AWS S3 data when credentials are configured
+        # If AWS is not configured, provider_times will only contain 'ddn_infinia'
 
         # Determine fastest provider based on download time (TTFB)
         if provider_times:
@@ -365,7 +351,23 @@ class VectorStore:
         object_key = f"chunks/{chunk_id}.pkl"
         handler = self.storage_handlers[provider]
 
+        start_time = time.perf_counter()
         chunk_bytes, message = handler.download_bytes(object_key)
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        
+        success = chunk_bytes is not None
+        bytes_size = len(chunk_bytes) if chunk_bytes else 0
+        
+        # Track storage operation metrics
+        if self.storage_ops_tracker:
+            self.storage_ops_tracker.track_operation(
+                op_type='GET',
+                provider=provider,
+                bytes_transferred=bytes_size,
+                latency_ms=latency_ms,
+                success=success
+            )
+        
         if chunk_bytes:
             try:
                 return pickle.loads(chunk_bytes), True
