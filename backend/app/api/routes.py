@@ -60,16 +60,18 @@ health_router = APIRouter(tags=["Health"])
 
 @config_router.post("/aws", response_model=StorageConfigResponse)
 async def configure_aws(config: AWSConfigRequest):
-    """Configure AWS S3 storage."""
+    """Configure AWS S3 / S3-Compatible storage."""
     storage_config.update_aws_config(
         access_key=config.access_key,
         secret_key=config.secret_key,
         bucket_name=config.bucket_name,
-        region=config.region
+        region=config.region,
+        endpoint_url=config.endpoint_url or ''
     )
+    provider_label = "S3-Compatible" if config.endpoint_url else "AWS S3"
     return StorageConfigResponse(
         success=True,
-        message="AWS S3 configuration updated",
+        message=f"{provider_label} configuration updated",
         aws_configured=True,
         ddn_configured=bool(storage_config.ddn_infinia_config.get('access_key'))
     )
@@ -100,7 +102,8 @@ async def get_current_config():
         "aws": {
             "configured": bool(storage_config.aws_config.get('access_key')),
             "bucket_name": storage_config.aws_config.get('bucket_name', ''),
-            "region": storage_config.aws_config.get('region', 'us-east-1')
+            "region": storage_config.aws_config.get('region', 'us-east-1'),
+            "endpoint_url": storage_config.aws_config.get('endpoint_url', '')
         },
         "ddn": {
             "configured": bool(storage_config.ddn_infinia_config.get('access_key')),

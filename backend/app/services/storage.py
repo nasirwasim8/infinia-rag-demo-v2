@@ -36,13 +36,35 @@ class S3Handler:
 
             if self.config_type == 'aws':
                 self.config = storage_config.aws_config
-                print(f"DEBUG: Initializing basic boto3 client for AWS...")
-                self.client = boto3.client(
-                    's3',
-                    aws_access_key_id=self.config['access_key'],
-                    aws_secret_access_key=self.config['secret_key'],
-                    region_name=self.config['region']
-                )
+                endpoint_url = self.config.get('endpoint_url', '').strip()
+
+                if endpoint_url:
+                    # S3-Compatible mode: OCI Object Storage, MinIO, Wasabi, etc.
+                    print(f"DEBUG: Initializing S3-compatible client (endpoint: {endpoint_url})...")
+                    boto_config = Config(
+                        signature_version='s3v4',
+                        s3={'addressing_style': 'path'},
+                        retries={'max_attempts': 3},
+                        connect_timeout=60,
+                        read_timeout=60
+                    )
+                    self.client = boto3.client(
+                        's3',
+                        aws_access_key_id=self.config['access_key'],
+                        aws_secret_access_key=self.config['secret_key'],
+                        endpoint_url=endpoint_url,
+                        region_name=self.config['region'],
+                        config=boto_config
+                    )
+                else:
+                    # Standard AWS S3
+                    print(f"DEBUG: Initializing standard AWS S3 client...")
+                    self.client = boto3.client(
+                        's3',
+                        aws_access_key_id=self.config['access_key'],
+                        aws_secret_access_key=self.config['secret_key'],
+                        region_name=self.config['region']
+                    )
             elif self.config_type == 'ddn_infinia':
                 self.config = storage_config.ddn_infinia_config
                 print(f"DEBUG: Initializing boto3 client for DDN (endpoint: {self.config.get('endpoint_url')})...")

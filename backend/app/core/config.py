@@ -65,6 +65,7 @@ class StorageConfig:
             'secret_key': '',
             'bucket_name': '',
             'region': 'us-east-1',
+            'endpoint_url': '',
             'provider': 'AWS S3'
         }
         self.ddn_infinia_config = {
@@ -116,13 +117,14 @@ class StorageConfig:
         except Exception as e:
             print(f"❌ Failed to save configuration: {e}")
 
-    def update_aws_config(self, access_key: str, secret_key: str, bucket_name: str, region: str):
-        """Update AWS S3 configuration."""
+    def update_aws_config(self, access_key: str, secret_key: str, bucket_name: str, region: str, endpoint_url: str = ''):
+        """Update AWS S3 / S3-Compatible configuration."""
         self.aws_config.update({
             'access_key': access_key,
             'secret_key': secret_key,
             'bucket_name': bucket_name,
-            'region': region
+            'region': region,
+            'endpoint_url': endpoint_url or ''
         })
         self._save_config()
 
@@ -179,6 +181,7 @@ class StorageConfig:
                     'secret_key': '',
                     'bucket_name': '',
                     'region': 'us-east-1',
+                    'endpoint_url': '',
                     'provider': 'AWS S3'
                 }
             

@@ -11,6 +11,7 @@ class AWSConfigRequest(BaseModel):
     secret_key: str
     bucket_name: str
     region: str = "us-east-1"
+    endpoint_url: Optional[str] = None
 
 
 class DDNConfigRequest(BaseModel):

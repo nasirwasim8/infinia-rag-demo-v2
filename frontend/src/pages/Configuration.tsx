@@ -10,6 +10,7 @@ export default function ConfigurationPage() {
     secret_key: '',
     bucket_name: '',
     region: 'us-east-1',
+    endpoint_url: '',
   })
 
   const [ddnConfig, setDdnConfig] = useState<StorageConfig>({
@@ -80,6 +81,7 @@ export default function ConfigurationPage() {
         secret_key: '',
         bucket_name: '',
         region: 'us-east-1',
+        endpoint_url: '',
       })
       setAwsStatus(null)
       toast.success('AWS S3 configuration reset')
@@ -117,7 +119,8 @@ export default function ConfigurationPage() {
           setAwsConfig(prev => ({
             ...prev,
             bucket_name: data.aws.bucket_name,
-            region: data.aws.region
+            region: data.aws.region,
+            endpoint_url: data.aws.endpoint_url || ''
           }))
         }
 
@@ -205,7 +208,7 @@ export default function ConfigurationPage() {
           isResetting={resetAwsMutation.isPending}
           testStatus={awsStatus?.connected ? 'success' : awsStatus === null ? 'idle' : 'error'}
           latency={awsStatus?.latency}
-          showEndpoint={false}
+          showEndpoint={true}
         />
 
         {/* DDN INFINIA Configuration */}
@@ -278,7 +281,7 @@ function ConfigCard({
           <div>
             <h3 className="font-semibold text-neutral-900">{title}</h3>
             <p className="text-xs text-neutral-500">
-              {isDDN ? 'High-performance storage' : 'Cloud storage'}
+              {isDDN ? 'High-performance storage' : 'S3-Compatible (AWS, OCI, MinIO)'}
             </p>
           </div>
         </div>
@@ -320,10 +323,10 @@ function ConfigCard({
         />
         {showEndpoint && (
           <FormField
-            label="Endpoint URL"
+            label={isDDN ? 'Endpoint URL' : 'Endpoint URL (leave blank for AWS)'}
             value={config.endpoint_url || ''}
             onChange={(v) => setConfig({ ...config, endpoint_url: v })}
-            placeholder="https://your-ddn-endpoint"
+            placeholder={isDDN ? 'https://your-ddn-endpoint' : 'https://<ns>.compat.objectstorage.<region>.oraclecloud.com'}
           />
         )}
         <FormField
