@@ -195,7 +195,9 @@ async def upload_document(file: UploadFile = File(...)):
             message=f"Successfully processed {file.filename}",
             filename=file.filename,
             total_chunks=results['total_chunks'],
-            provider_performance=results['provider_performance']
+            provider_performance=results['provider_performance'],
+            embedding_time_ms=results.get('embedding_time_ms'),
+            embedding_device=results.get('embedding_device')
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -216,7 +218,9 @@ async def upload_multiple_documents(files: List[UploadFile] = File(...)):
                 "success": True,
                 "chunks": result.total_chunks,
                 "provider_performance": result.provider_performance,
-                "aws_simulated": result.provider_performance.get('aws', {}).get('simulated', False) if result.provider_performance else False
+                "aws_simulated": result.provider_performance.get('aws', {}).get('simulated', False) if result.provider_performance else False,
+                "embedding_time_ms": result.embedding_time_ms,
+                "embedding_device": result.embedding_device
             })
         except HTTPException as e:
             results.append({"filename": file.filename, "success": False, "error": e.detail})

@@ -56,6 +56,19 @@ export default function DocumentsPage() {
         const timeSaved = awsTotalTime - ddnTotalTime
         const timeSavedSec = (timeSaved / 1000).toFixed(2)
 
+        // GPU embedding metrics
+        const embeddingTimeMs = firstResult?.embedding_time_ms
+        const embeddingDevice = firstResult?.embedding_device || 'cpu'
+        const isGpu = embeddingDevice === 'cuda'
+        const embeddingSection = embeddingTimeMs != null
+          ? `\n⚡ Embedding Performance (${isGpu ? 'GPU — CUDA Accelerated' : 'CPU'})
+====================================
+  • Device: ${embeddingDevice.toUpperCase()}${isGpu ? ' 🚀' : ''}
+  • Total embedding time: ${embeddingTimeMs.toFixed(1)}ms
+  • Chunks per second: ${((totalChunks / embeddingTimeMs) * 1000).toFixed(0)} chunks/sec
+  • Per-chunk avg: ${(embeddingTimeMs / Math.max(totalChunks, 1)).toFixed(1)}ms\n`
+          : ''
+
         perfSummary = `
 
 📊 Storage Performance Comparison
@@ -72,7 +85,7 @@ Overall Performance (${totalChunks} chunks):
   • Time Saved: ${timeSavedSec}s (${speedup}x faster)
 
 ✅ DDN INFINIA processed ${totalChunks} chunks ${speedup}x faster!
-${awsSimulated ? '\nNote: Configure AWS credentials for real comparison data.' : ''}`
+${awsSimulated ? '\nNote: Configure AWS credentials for real comparison data.' : ''}${embeddingSection}`
       }
 
       const summary = `

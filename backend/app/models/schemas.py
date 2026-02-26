@@ -56,6 +56,8 @@ class DocumentUploadResponse(BaseModel):
     provider_performance: Dict[str, Dict[str, Any]]
     aws_simulated: bool = False
     simulation_note: Optional[str] = None
+    embedding_time_ms: Optional[float] = None   # Time to generate all embeddings
+    embedding_device: Optional[str] = None       # 'cuda' or 'cpu'
 
 
 class DocumentListResponse(BaseModel):

@@ -39,6 +39,7 @@ class VectorStore:
             device = "cpu"
         self.embedding_model = SentenceTransformer(self.model_name, device=device)
         self.embedding_dim = self.embedding_model.get_sentence_embedding_dimension()
+        self.device = device  # Track for GPU metrics
 
 
         # Initialize FAISS index
@@ -77,15 +78,18 @@ class VectorStore:
         results = {
             'total_chunks': len(chunks),
             'stored_chunks': 0,
-            'provider_performance': {p: {'times': [], 'success': 0, 'failed': 0} for p in self.providers}
+            'provider_performance': {p: {'times': [], 'success': 0, 'failed': 0} for p in self.providers},
+            'embedding_time_ms': 0.0,
+            'embedding_device': self.device
         }
 
         # Extract all contents for batch embedding
         contents = [chunk['content'] for chunk in chunks]
         
         # Generate ALL embeddings at once (much faster and avoids threading issues)
-        logger.info(f"🔮 Generating embeddings for {len(contents)} chunks...")
-        logger.info(f"   Calling embedding model with batch_size=8...")
+        logger.info(f"🔮 Generating embeddings for {len(contents)} chunks on {self.device}...")
+        logger.info(f"   Calling embedding model with batch_size=8 on {self.device}...")
+        _embed_start = time.perf_counter()
         try:
             embeddings = self.embedding_model.encode(
                 contents,
@@ -95,8 +99,9 @@ class VectorStore:
         except Exception as e:
             logger.error(f"❌ Embedding generation failed: {e}")
             raise
+        results['embedding_time_ms'] = (time.perf_counter() - _embed_start) * 1000
         logger.info(f"   Embeddings shape: {embeddings.shape}")
-        logger.info(f"✅ Embeddings generated successfully")
+        logger.info(f"✅ Embeddings generated in {results['embedding_time_ms']:.1f}ms on {self.device}")
 
         # Process each chunk with its pre-computed embedding
         for i, chunk in enumerate(chunks):
