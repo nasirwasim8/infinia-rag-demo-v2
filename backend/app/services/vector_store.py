@@ -85,12 +85,16 @@ class VectorStore:
         
         # Generate ALL embeddings at once (much faster and avoids threading issues)
         logger.info(f"🔮 Generating embeddings for {len(contents)} chunks...")
-        logger.info(f"   Calling embedding model with batch_size=32...")
-        embeddings = self.embedding_model.encode(
-            contents,
-            show_progress_bar=False,  # Disable progress bar to prevent hanging in background threads
-            batch_size=32  # Process in batches of 32 for efficiency
-        )
+        logger.info(f"   Calling embedding model with batch_size=8...")
+        try:
+            embeddings = self.embedding_model.encode(
+                contents,
+                show_progress_bar=False,  # Disable progress bar to prevent hanging in background threads
+                batch_size=8  # Reduced from 32 to prevent OOM on memory-constrained servers
+            )
+        except Exception as e:
+            logger.error(f"❌ Embedding generation failed: {e}")
+            raise
         logger.info(f"   Embeddings shape: {embeddings.shape}")
         logger.info(f"✅ Embeddings generated successfully")
 
