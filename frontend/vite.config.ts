@@ -10,6 +10,8 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+        timeout: 300000,        // 5 min — allow time for PDF embedding
+        proxyTimeout: 300000,   // 5 min — server-side proxy timeout
       },
     },
   },
