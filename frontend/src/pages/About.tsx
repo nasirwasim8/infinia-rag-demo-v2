@@ -7,7 +7,7 @@ interface AboutPageProps {
 }
 
 // ─── GTC 2026 Strategic Outcomes Section ─────────────────────────────────────
-function GtcOutcomesSection() {
+function GtcOutcomesSection({ onStartDemo }: { onStartDemo?: () => void }) {
   const [open, setOpen] = useState<number | null>(null)
 
   const columns = [
@@ -208,6 +208,25 @@ function GtcOutcomesSection() {
           </div>
         </div>
 
+        {/* ── CTA Button ────────────────────────────────────────────────────────── */}
+        {onStartDemo && (
+          <div className="text-center mt-8">
+            <button
+              onClick={onStartDemo}
+              className="group inline-flex items-center gap-3 px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-300"
+              style={{
+                background: 'linear-gradient(135deg, #ED2738 0%, #76B900 100%)',
+                color: 'white',
+                boxShadow: '0 8px 30px rgba(237, 39, 56, 0.25)'
+              }}
+            >
+              <span>See the Performance Difference</span>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+            <p className="text-sm text-neutral-400 mt-3">Live demonstration with real-time metrics</p>
+          </div>
+        )}
+
       </div>
     </section>
   )
@@ -281,326 +300,9 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
 
   return (
     <div className="about-page">
-      {/* Business Impact Hero - Leadership Focus */}
-      <section className="relative overflow-hidden" style={{
-        background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%)',
-        minHeight: '100vh'
-      }}>
-        {/* Subtle Grid Background */}
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
-            backgroundSize: '50px 50px'
-          }}
-        />
 
-        <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-8 md:py-12">
-          {/* Executive Headline */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-8"
-          >
-            <div className="inline-block px-6 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 mb-6">
-              <span className="text-amber-400 text-sm font-semibold tracking-wide">BUSINESS IMPACT</span>
-            </div>
-            <h1
-              className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4"
-              style={{ letterSpacing: '-0.02em', lineHeight: 1.1 }}
-            >
-              Turn AI Infrastructure Into
-              <br />
-              <span className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
-                Measurable Business Value
-              </span>
-            </h1>
-            <p className="text-lg md:text-xl text-white/70 max-w-4xl mx-auto leading-relaxed">
-              Strategic infrastructure choices for{' '}
-              <span
-                className="text-xl md:text-2xl font-bold px-2 py-0.5 rounded-lg"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(118, 185, 0, 0.2), rgba(237, 39, 56, 0.2))',
-                  color: '#76B900',
-                  border: '2px solid rgba(118, 185, 0, 0.4)'
-                }}
-              >
-                RAG Applications
-              </span>{' '}
-              directly impact your bottom line—
-              <span className="text-emerald-400 font-semibold">significantly reducing costs</span> while
-              <span className="text-emerald-400 font-semibold">dramatically accelerating time-to-value</span>
-            </p>
-          </motion.div>
 
-          {/* Three Pillars of Business Value */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="grid md:grid-cols-3 gap-4 mb-8"
-          >
-            {/* Cost Reduction */}
-            <div className="relative group">
-              <div
-                className="h-full p-4 rounded-2xl border transition-all duration-300"
-                style={{
-                  background: 'rgba(16, 185, 129, 0.05)',
-                  borderColor: 'rgba(16, 185, 129, 0.2)',
-                }}
-              >
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-3">
-                  <BarChart3 className="w-6 h-6 text-emerald-400" />
-                </div>
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-3">Cost Reduction</h3>
-                <div className="space-y-2 mb-4">
-                  <div>
-                    <div className="text-2xl md:text-3xl font-bold text-emerald-400 mb-1">Dramatically</div>
-                    <div className="text-sm md:text-base text-white/60">lower storage costs</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl md:text-3xl font-bold text-emerald-400 mb-1">Significantly</div>
-                    <div className="text-sm md:text-base text-white/60">improved GPU efficiency</div>
-                  </div>
-                </div>
-                <ul className="space-y-2 text-sm md:text-base text-white/70">
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 mt-1">✓</span>
-                    <span>Eliminate expensive cloud egress fees</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 mt-1">✓</span>
-                    <span>Reduce GPU idle time with faster I/O</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400 mt-1">✓</span>
-                    <span>Lower operational overhead</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
 
-            {/* Revenue Acceleration */}
-            <div className="relative group">
-              <div
-                className="h-full p-4 rounded-2xl border transition-all duration-300"
-                style={{
-                  background: 'rgba(251, 191, 36, 0.05)',
-                  borderColor: 'rgba(251, 191, 36, 0.2)',
-                }}
-              >
-                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-3">
-                  <Zap className="w-6 h-6 text-amber-400" />
-                </div>
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-3">Revenue Acceleration</h3>
-                <div className="space-y-2 mb-4">
-                  <div>
-                    <div className="text-2xl md:text-3xl font-bold text-amber-400 mb-1">Rapid</div>
-                    <div className="text-sm md:text-base text-white/60">time-to-market</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl md:text-3xl font-bold text-amber-400 mb-1">Enhanced</div>
-                    <div className="text-sm md:text-base text-white/60">productivity</div>
-                  </div>
-                </div>
-                <ul className="space-y-2 text-sm md:text-base text-white/70">
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-400 mt-1">✓</span>
-                    <span>Launch AI products faster</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-400 mt-1">✓</span>
-                    <span>Improve customer satisfaction with lightning-fast responses</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-amber-400 mt-1">✓</span>
-                    <span>Enable real-time AI experiences</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Strategic Advantage */}
-            <div className="relative group">
-              <div
-                className="h-full p-4 rounded-2xl border transition-all duration-300"
-                style={{
-                  background: 'rgba(237, 39, 56, 0.05)',
-                  borderColor: 'rgba(237, 39, 56, 0.2)',
-                }}
-              >
-                <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-3">
-                  <Server className="w-6 h-6 text-red-400" />
-                </div>
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-3">Competitive Advantage</h3>
-                <div className="space-y-2 mb-4">
-                  <div>
-                    <div className="text-2xl md:text-3xl font-bold text-red-400 mb-1">Exceptional</div>
-                    <div className="text-sm md:text-base text-white/60">retrieval speed</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl md:text-3xl font-bold text-red-400 mb-1">Unlimited</div>
-                    <div className="text-sm md:text-base text-white/60">scalability</div>
-                  </div>
-                </div>
-                <ul className="space-y-2 text-sm md:text-base text-white/70">
-                  <li className="flex items-start gap-2">
-                    <span className="text-red-400 mt-1">✓</span>
-                    <span>Differentiate with superior AI performance</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-red-400 mt-1">✓</span>
-                    <span>Scale without infrastructure constraints</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-red-400 mt-1">✓</span>
-                    <span>Future-proof AI investments</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* The AI Infrastructure Challenge Section - Separate Slide */}
-      <section className="relative overflow-hidden" style={{
-        background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%)',
-        minHeight: '100vh'
-      }}>
-        {/* Subtle Grid Background */}
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
-            backgroundSize: '50px 50px'
-          }}
-        />
-
-        <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-16 md:py-24">
-          {/* The Challenge & Solution */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-20"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-white text-center mb-12">
-              The AI Infrastructure Challenge
-            </h2>
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Traditional Approach */}
-              <div className="p-8 rounded-2xl bg-red-950/20 border border-red-900/30">
-                <h3 className="text-2xl md:text-3xl font-bold text-red-400 mb-6">❌ Traditional Approach</h3>
-                <ul className="space-y-4 text-lg md:text-xl text-white/70">
-                  <li className="flex items-start gap-3">
-                    <Database className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <div className="text-xl font-semibold text-white">Slow Cloud Storage</div>
-                      <div className="text-base md:text-lg">200-500ms TTFB creates GPU bottlenecks</div>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Cloud className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <div className="text-xl font-semibold text-white">High Egress Costs</div>
-                      <div className="text-base md:text-lg">$0.09/GB adds up fast at enterprise scale</div>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Server className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <div className="text-xl font-semibold text-white">GPU Underutilization</div>
-                      <div className="text-base md:text-lg">Expensive GPUs wait on slow I/O</div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-
-              {/* DDN + NVIDIA Solution */}
-              <div className="p-8 rounded-2xl bg-gradient-to-br from-emerald-950/30 to-blue-950/30 border border-emerald-500/30">
-                <h3 className="text-2xl md:text-3xl font-bold text-emerald-400 mb-6">✓ DDN + NVIDIA Solution</h3>
-                <ul className="space-y-4 text-lg md:text-xl text-white/70">
-                  <li className="flex items-start gap-3">
-                    <Zap className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <div className="text-xl font-semibold text-white">High-Speed INFINIA Storage</div>
-                      <div className="text-base md:text-lg">20-50ms TTFB eliminates bottlenecks</div>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <BarChart3 className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <div className="text-xl font-semibold text-white">Predictable Costs</div>
-                      <div className="text-base md:text-lg">No egress fees, flat pricing model</div>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Search className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <div className="text-xl font-semibold text-white">Maximum GPU Efficiency</div>
-                      <div className="text-base md:text-lg">Keep expensive compute fully utilized</div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* ROI Statement */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center p-12 rounded-2xl bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10 border border-amber-500/20"
-          >
-            <p className="text-2xl md:text-3xl text-white mb-6 leading-relaxed">
-              "The right infrastructure choice today determines whether your AI initiatives
-              <span className="text-amber-400 font-bold"> generate revenue</span> or
-              <span className="text-red-400 font-bold"> drain budgets</span>"
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-6 text-white/60">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-                <span>Proven at enterprise scale</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-amber-400"></div>
-                <span>Real-world performance data</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-400"></div>
-                <span>Production-ready architecture</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mt-16"
-          >
-            {onStartDemo && (
-              <button
-                onClick={onStartDemo}
-                className="group inline-flex items-center gap-3 px-10 py-5 rounded-xl text-2xl md:text-3xl font-semibold transition-all duration-300"
-                style={{
-                  background: 'linear-gradient(135deg, #ED2738 0%, #76B900 100%)',
-                  color: 'white',
-                  boxShadow: '0 10px 40px rgba(237, 39, 56, 0.3)'
-                }}
-              >
-                <span>See the Performance Difference</span>
-                <ArrowRight className="w-6 h-6 md:w-8 md:h-8 group-hover:translate-x-1 transition-transform" />
-              </button>
-            )}
-            <p className="text-white/50 text-lg md:text-xl mt-6">Live demonstration with real-time metrics</p>
-          </motion.div>
-        </div>
-      </section>
 
       {/* Original Hero Section */}
       <section className="relative overflow-hidden" style={{ background: '#050508' }}>
@@ -766,7 +468,7 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
       {/* ════════════════════════════════════════════════════════════════════════
            GTC 2026 — Strategic Outcomes  (inserted before Architecture)
        ════════════════════════════════════════════════════════════════════════ */}
-      <GtcOutcomesSection />
+      <GtcOutcomesSection onStartDemo={onStartDemo} />
 
       {/* Architecture Section */}
       <section className="bg-surface-primary px-6 py-16">
@@ -1235,6 +937,90 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             This demo environment is designed to showcase the performance advantages of DDN INFINIA for RAG applications.
             Results may vary based on network conditions, document complexity, and system load.
           </div>
+        </div>
+      </section>
+
+      {/* Business Impact Hero - moved after use cases */}
+      <section className="relative overflow-hidden" style={{
+        background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%)',
+      }}>
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
+            backgroundSize: '50px 50px'
+          }}
+        />
+        <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center mb-10"
+          >
+            <div className="inline-block px-6 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 mb-6">
+              <span className="text-amber-400 text-sm font-semibold tracking-wide">BUSINESS IMPACT</span>
+            </div>
+            <h2
+              className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4"
+              style={{ letterSpacing: '-0.02em', lineHeight: 1.1 }}
+            >
+              Turn AI Infrastructure Into
+              <br />
+              <span className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+                Measurable Business Value
+              </span>
+            </h2>
+            <p className="text-lg md:text-xl text-white/70 max-w-4xl mx-auto leading-relaxed">
+              Strategic infrastructure choices for{' '}
+              <span
+                className="text-xl md:text-2xl font-bold px-2 py-0.5 rounded-lg"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(118, 185, 0, 0.2), rgba(237, 39, 56, 0.2))',
+                  color: '#76B900',
+                  border: '2px solid rgba(118, 185, 0, 0.4)'
+                }}
+              >
+                RAG Applications
+              </span>{' '}
+              directly impact your bottom line—
+              <span className="text-emerald-400 font-semibold"> significantly reducing costs</span> while
+              <span className="text-emerald-400 font-semibold"> dramatically accelerating time-to-value</span>
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="grid md:grid-cols-3 gap-4"
+          >
+            {[
+              { color: '#10b981', bg: 'rgba(16,185,129,0.05)', border: 'rgba(16,185,129,0.2)', title: 'Cost Reduction', vals: ['Dramatically', 'lower storage costs', 'Significantly', 'improved GPU efficiency'], items: ['Eliminate expensive cloud egress fees', 'Reduce GPU idle time with faster I/O', 'Lower operational overhead'] },
+              { color: '#f59e0b', bg: 'rgba(251,191,36,0.05)', border: 'rgba(251,191,36,0.2)', title: 'Revenue Acceleration', vals: ['Rapid', 'time-to-market', 'Enhanced', 'productivity'], items: ['Launch AI products faster', 'Improve customer satisfaction with fast responses', 'Enable real-time AI experiences'] },
+              { color: '#ef4444', bg: 'rgba(237,39,56,0.05)', border: 'rgba(237,39,56,0.2)', title: 'Competitive Advantage', vals: ['Exceptional', 'retrieval speed', 'Unlimited', 'scalability'], items: ['Differentiate with superior AI performance', 'Scale without infrastructure constraints', 'Future-proof AI investments'] },
+            ].map((col) => (
+              <div key={col.title} className="h-full p-5 rounded-2xl border transition-all duration-300" style={{ background: col.bg, borderColor: col.border }}>
+                <h3 className="text-xl font-bold text-white mb-3">{col.title}</h3>
+                <div className="space-y-1 mb-4">
+                  <div className="text-2xl font-bold" style={{ color: col.color }}>{col.vals[0]}</div>
+                  <div className="text-sm text-white/60">{col.vals[1]}</div>
+                  <div className="text-2xl font-bold" style={{ color: col.color }}>{col.vals[2]}</div>
+                  <div className="text-sm text-white/60">{col.vals[3]}</div>
+                </div>
+                <ul className="space-y-2">
+                  {col.items.map(item => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-white/70">
+                      <span className="mt-0.5" style={{ color: col.color }}>✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
