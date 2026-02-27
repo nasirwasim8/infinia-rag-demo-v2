@@ -489,7 +489,7 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             className="rounded-2xl p-6"
             style={{ background: '#201E1E', border: '1px solid #3F3B3C' }}
           >
-            <svg width="100%" height="500" viewBox="0 0 1200 500" xmlns="http://www.w3.org/2000/svg" id="ragDiagram">
+            <svg width="100%" height="520" viewBox="0 0 1200 520" xmlns="http://www.w3.org/2000/svg" id="ragDiagram">
               <defs>
                 <linearGradient id="ddnGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" style={{ stopColor: '#E31B23', stopOpacity: 1 }} />
@@ -512,122 +512,148 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
                 <marker id="arrowhead2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
                   <polygon points="0 0, 10 3, 0 6" fill="#FFD700" />
                 </marker>
+                <marker id="arrowheadRed" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                  <polygon points="0 0, 10 3, 0 6" fill="#E31B23" />
+                </marker>
               </defs>
 
-              {/* Data Ingestion Stage */}
+              {/* ── Stage 1: Document Ingestion ───────────────────────────── */}
               <g id="ingestion">
-                <rect x="20" y="50" width="140" height="95" rx="8" fill="#2a2a2a" stroke="#76B900" strokeWidth="2" />
+                <rect x="20" y="50" width="140" height="100" rx="8" fill="#2a2a2a" stroke="#76B900" strokeWidth="2" />
                 <text x="90" y="78" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">Document</text>
-                <text x="90" y="98" textAnchor="middle" fill="#76B900" fontSize="11" fontWeight="bold">Multi-Modal</text>
-                <text x="90" y="115" textAnchor="middle" fill="#76B900" fontSize="10">Upload</text>
-                <text x="90" y="130" textAnchor="middle" fill="#888888" fontSize="8">PDF / Word / Excel / PPT</text>
+                <text x="90" y="96" textAnchor="middle" fill="#76B900" fontSize="11" fontWeight="bold">Multi-Modal</text>
+                <text x="90" y="112" textAnchor="middle" fill="#76B900" fontSize="10">Upload</text>
+                <text x="90" y="128" textAnchor="middle" fill="#888888" fontSize="8">PDF / Word / Excel / PPT / TXT</text>
+                <text x="90" y="143" textAnchor="middle" fill="#888888" fontSize="7">CSV / PPTX supported</text>
               </g>
 
-              <path d="M 160 90 L 190 90" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
+              <path d="M 160 100 L 188 100" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
 
-              {/* Text Processing with NVIDIA NV-Ingest */}
+              {/* ── Stage 2: NV-Ingest Compatible Chunking (NVIDIA-powered) ── */}
               <g id="processing">
-                <rect x="190" y="50" width="140" height="95" rx="8" fill="#2a2a2a" stroke="#76B900" strokeWidth="2" />
-                <text x="260" y="75" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">Extract &amp;</text>
-                <rect x="205" y="83" width="110" height="26" rx="4" fill="#76B900" opacity="0.9" />
-                <text x="260" y="101" textAnchor="middle" fill="#ffffff" fontSize="11" fontWeight="bold">NV-Ingest</text>
-                <text x="260" y="118" textAnchor="middle" fill="#76B900" fontSize="10">Smart Chunking</text>
-                <text x="260" y="133" textAnchor="middle" fill="#888888" fontSize="8">Auto-fallback enabled</text>
+                <rect x="190" y="50" width="148" height="100" rx="8" fill="#2a2a2a" stroke="#76B900" strokeWidth="2" />
+                <text x="264" y="74" textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="bold">Extract &amp;</text>
+                {/* NVIDIA green pill — keeps the brand prominent */}
+                <rect x="204" y="80" width="120" height="24" rx="5" fill="#76B900" opacity="0.92" />
+                <text x="264" y="96" textAnchor="middle" fill="#ffffff" fontSize="10" fontWeight="bold">NV-Ingest Compatible</text>
+                <text x="264" y="116" textAnchor="middle" fill="#76B900" fontSize="9">Semantic Chunking</text>
+                <text x="264" y="130" textAnchor="middle" fill="#888888" fontSize="7">SentenceTransformers · auto-fallback</text>
+                <text x="264" y="143" textAnchor="middle" fill="#555555" fontSize="7">LangChain RecursiveTextSplitter</text>
               </g>
 
-              <path d="M 330 90 L 360 90" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
+              <path d="M 338 100 L 358 100" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
 
-              {/* Dual Storage - DDN INFINIA + AWS S3 */}
+              {/* ── Stage 3: Dual Storage ─────────────────────────────────── */}
               <g id="storage">
-                <rect x="360" y="20" width="180" height="160" rx="8" fill="url(#ddnGradient)" stroke="#E31B23" strokeWidth="3" filter="url(#glow)" />
-                <text x="450" y="45" textAnchor="middle" fill="#ffffff" fontSize="16" fontWeight="bold">Dual Storage</text>
-                <rect x="370" y="55" width="160" height="42" rx="4" fill="#1a1a1a" stroke="#ffffff" strokeWidth="0.5" />
-                <text x="450" y="72" textAnchor="middle" fill="#E31B23" fontSize="12" fontWeight="bold">DDN INFINIA</text>
-                <text x="450" y="87" textAnchor="middle" fill="#FFD700" fontSize="9">Data Center / Colorado DC</text>
-                <text x="450" y="108" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">vs</text>
-                <rect x="370" y="115" width="160" height="42" rx="4" fill="#1a1a1a" stroke="#ffffff" strokeWidth="0.5" />
-                <text x="450" y="132" textAnchor="middle" fill="#FF9900" fontSize="12" fontWeight="bold">Traditional Storage</text>
-                <text x="450" y="147" textAnchor="middle" fill="#FFD700" fontSize="9">Cloud Storage</text>
-                <text x="450" y="170" textAnchor="middle" fill="#FFD700" fontSize="10" fontWeight="bold">Performance Tested</text>
+                <rect x="360" y="20" width="182" height="165" rx="8" fill="url(#ddnGradient)" stroke="#E31B23" strokeWidth="3" filter="url(#glow)" />
+                <text x="451" y="46" textAnchor="middle" fill="#ffffff" fontSize="15" fontWeight="bold">Dual Storage</text>
+                {/* DDN row */}
+                <rect x="370" y="54" width="162" height="44" rx="4" fill="#1a1a1a" stroke="#ffffff" strokeWidth="0.5" />
+                <text x="451" y="72" textAnchor="middle" fill="#E31B23" fontSize="12" fontWeight="bold">DDN INFINIA</text>
+                <text x="451" y="88" textAnchor="middle" fill="#FFD700" fontSize="8">On-Premises · Colorado DC</text>
+                {/* vs */}
+                <text x="451" y="110" textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="bold">vs</text>
+                {/* S3 row */}
+                <rect x="370" y="116" width="162" height="44" rx="4" fill="#1a1a1a" stroke="#ffffff" strokeWidth="0.5" />
+                <text x="451" y="134" textAnchor="middle" fill="#FF9900" fontSize="12" fontWeight="bold">Traditional Storage</text>
+                <text x="451" y="149" textAnchor="middle" fill="#FFD700" fontSize="8">Cloud (AWS S3 or S3-Compatible)</text>
+                <text x="451" y="175" textAnchor="middle" fill="#FFD700" fontSize="9" fontWeight="bold">GET Latency Benchmarked</text>
               </g>
 
-              <path d="M 450 180 L 450 220" stroke="#E31B23" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
+              <path d="M 451 185 L 451 220" stroke="#E31B23" strokeWidth="2" markerEnd="url(#arrowheadRed)" fill="none" />
 
-              {/* FAISS Vector Search */}
+              {/* ── Stage 4: Query Embedding (new node) ──────────────────── */}
+              <g id="embedding">
+                <rect x="372" y="222" width="158" height="58" rx="8" fill="#1e2a1e" stroke="#76B900" strokeWidth="1.5" strokeDasharray="5,3" />
+                <text x="451" y="244" textAnchor="middle" fill="#76B900" fontSize="12" fontWeight="bold">Query Embedding</text>
+                <text x="451" y="260" textAnchor="middle" fill="#888888" fontSize="9">SentenceTransformer encode()</text>
+                <text x="451" y="274" textAnchor="middle" fill="#555555" fontSize="7">all-MiniLM-L6-v2 · GPU accelerated</text>
+              </g>
+
+              <path d="M 451 280 L 451 305" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
+
+              {/* ── Stage 5: FAISS Vector Search ─────────────────────────── */}
               <g id="vector">
-                <rect x="370" y="220" width="160" height="70" rx="8" fill="#2a2a2a" stroke="#76B900" strokeWidth="2" />
-                <text x="450" y="248" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">FAISS</text>
-                <text x="450" y="268" textAnchor="middle" fill="#76B900" fontSize="11">Vector Search</text>
-                <text x="450" y="282" textAnchor="middle" fill="#888888" fontSize="8">Semantic Retrieval</text>
+                <rect x="372" y="306" width="158" height="65" rx="8" fill="#2a2a2a" stroke="#76B900" strokeWidth="2" />
+                <text x="451" y="330" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">FAISS</text>
+                <text x="451" y="348" textAnchor="middle" fill="#76B900" fontSize="10">IndexFlatL2 · Vector Search</text>
+                <text x="451" y="364" textAnchor="middle" fill="#888888" fontSize="8">Semantic chunk retrieval</text>
               </g>
 
-              <path d="M 530 255 L 580 255" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
+              <path d="M 530 338 L 575 338" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
 
-              {/* NeMo Reranker */}
+              {/* ── Stage 6: NeMo Reranker (NVIDIA) ──────────────────────── */}
               <g id="reranker">
-                <rect x="580" y="220" width="150" height="70" rx="8" fill="url(#nvidiaGradient)" stroke="#76B900" strokeWidth="2" />
-                <text x="655" y="248" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">NeMo Reranker</text>
-                <text x="655" y="268" textAnchor="middle" fill="#ffffff" fontSize="10">Score &amp; Reorder</text>
-                <text x="655" y="282" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="8">Improved Relevance</text>
+                <rect x="577" y="306" width="155" height="65" rx="8" fill="url(#nvidiaGradient)" stroke="#76B900" strokeWidth="2" filter="url(#glow)" />
+                <text x="654" y="328" textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="bold">NeMo Reranker</text>
+                <text x="654" y="346" textAnchor="middle" fill="#ffffff" fontSize="10">Score &amp; Reorder Results</text>
+                <text x="654" y="362" textAnchor="middle" fill="rgba(255,255,255,0.75)" fontSize="8">NVIDIA NIM · Improved Relevance</text>
               </g>
 
-              <path d="M 730 255 L 780 255" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
+              <path d="M 732 338 L 777 338" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
 
-              {/* NeMo Guardrails */}
+              {/* ── Stage 7: NeMo Guardrails (NVIDIA) ────────────────────── */}
               <g id="guardrails">
-                <rect x="780" y="220" width="150" height="70" rx="8" fill="#2a2a2a" stroke="#76B900" strokeWidth="2" />
-                <text x="855" y="248" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="bold">Guardrails</text>
-                <text x="855" y="268" textAnchor="middle" fill="#76B900" fontSize="10">Content Safety</text>
-                <text x="855" y="282" textAnchor="middle" fill="#888888" fontSize="8">Input/Output Filter</text>
+                <rect x="779" y="306" width="155" height="65" rx="8" fill="#1a2a1a" stroke="#76B900" strokeWidth="2" />
+                <text x="856" y="328" textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="bold">NeMo Guardrails</text>
+                <text x="856" y="346" textAnchor="middle" fill="#76B900" fontSize="10">Content Safety</text>
+                <text x="856" y="362" textAnchor="middle" fill="#888888" fontSize="8">Input / Output Filter · NVIDIA</text>
               </g>
 
-              <path d="M 930 255 L 980 255" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
+              <path d="M 934 338 L 975 338" stroke="#76B900" strokeWidth="2" markerEnd="url(#arrowhead)" fill="none" />
 
-              {/* LLM Response - Model Agnostic */}
+              {/* ── Stage 8: LLM Response (NVIDIA — highlighted) ─────────── */}
               <g id="response">
-                <rect x="980" y="180" width="180" height="150" rx="8" fill="url(#nvidiaGradient)" stroke="#76B900" strokeWidth="3" filter="url(#glow)" />
+                <rect x="977" y="268" width="195" height="155" rx="8" fill="url(#nvidiaGradient)" stroke="#76B900" strokeWidth="3" filter="url(#glow)" />
 
                 {/* Model Agnostic Badge */}
-                <rect x="995" y="195" width="150" height="22" rx="4" fill="rgba(255,215,0,0.2)" stroke="#FFD700" strokeWidth="1.5" />
-                <text x="1070" y="210" textAnchor="middle" fill="#FFD700" fontSize="11" fontWeight="bold">🔄 MODEL AGNOSTIC</text>
+                <rect x="990" y="278" width="169" height="20" rx="4" fill="rgba(255,215,0,0.2)" stroke="#FFD700" strokeWidth="1.5" />
+                <text x="1074" y="292" textAnchor="middle" fill="#FFD700" fontSize="10" fontWeight="bold">MODEL AGNOSTIC</text>
 
-                {/* Primary Model */}
-                <text x="1070" y="235" textAnchor="middle" fill="#ffffff" fontSize="16" fontWeight="bold">Nemotron 70B</text>
+                {/* Primary model — actual default */}
+                <text x="1074" y="316" textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="bold">Llama 3.1-8B Instruct</text>
+                <text x="1074" y="333" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Default · NVIDIA NIM</text>
 
-                {/* Additional Models */}
-                <text x="1070" y="255" textAnchor="middle" fill="#ffffff" fontSize="11" opacity="0.9">Llama 3.1 • Mixtral</text>
-                <text x="1070" y="270" textAnchor="middle" fill="#ffffff" fontSize="10" opacity="0.7">+ More Models</text>
+                {/* Optional NVIDIA API model */}
+                <rect x="992" y="340" width="165" height="18" rx="4" fill="rgba(0,0,0,0.25)" />
+                <text x="1074" y="353" textAnchor="middle" fill="#FFD700" fontSize="9" fontWeight="bold">+ Nemotron 70B  (NVIDIA API key)</text>
 
-                {/* LLM Response Label */}
-                <text x="1070" y="290" textAnchor="middle" fill="#ffffff" fontSize="12">LLM Response</text>
+                <text x="1074" y="376" textAnchor="middle" fill="#ffffff" fontSize="11">LLM Response · Streaming</text>
 
-                {/* Performance Badge */}
-                <rect x="1010" y="300" width="120" height="20" rx="4" fill="rgba(0,0,0,0.3)" />
-                <text x="1070" y="314" textAnchor="middle" fill="#FFD700" fontSize="10" fontWeight="bold">SUB-100MS</text>
+                {/* Sub-100ms badge */}
+                <rect x="1010" y="386" width="130" height="20" rx="4" fill="rgba(0,0,0,0.35)" />
+                <text x="1074" y="400" textAnchor="middle" fill="#FFD700" fontSize="10" fontWeight="bold">SUB-100MS RETRIEVAL</text>
               </g>
 
-              {/* User Query Path */}
-              <path d="M 90 170 L 90 380 L 450 380 L 450 290" stroke="#FFD700" strokeWidth="2" strokeDasharray="8,4" fill="none" markerEnd="url(#arrowhead2)" />
-              <text x="270" y="395" textAnchor="middle" fill="#FFD700" fontSize="10">User Query Flow</text>
+              {/* ── User Query Flow (dashed gold) ─────────────────────────── */}
+              <path d="M 90 175 L 90 430 L 451 430 L 451 395" stroke="#FFD700" strokeWidth="2" strokeDasharray="8,4" fill="none" markerEnd="url(#arrowhead2)" />
+              <text x="270" y="448" textAnchor="middle" fill="#FFD700" fontSize="10">User Query Flow</text>
 
-              {/* Metrics Box */}
+              {/* ── Performance Metrics Box (corrected: Retrieval, not Upload) */}
               <g id="metrics">
-                <rect x="20" y="190" width="140" height="100" rx="8" fill="#2a2a2a" stroke="#E31B23" strokeWidth="2" />
-                <text x="90" y="215" textAnchor="middle" fill="#ffffff" fontSize="12" fontWeight="bold">Performance</text>
-                <text x="90" y="235" textAnchor="middle" fill="#E31B23" fontSize="10">DDN INFINIA</text>
-                <text x="90" y="253" textAnchor="middle" fill="#00C280" fontSize="9">Faster Upload Speed</text>
-                <text x="90" y="270" textAnchor="middle" fill="#00C280" fontSize="9">Lower Latency</text>
-                <text x="90" y="287" textAnchor="middle" fill="#888888" fontSize="8">vs Traditional Storage</text>
+                <rect x="20" y="195" width="145" height="105" rx="8" fill="#2a2a2a" stroke="#E31B23" strokeWidth="2" />
+                <text x="92" y="218" textAnchor="middle" fill="#ffffff" fontSize="12" fontWeight="bold">Performance</text>
+                <text x="92" y="236" textAnchor="middle" fill="#E31B23" fontSize="10" fontWeight="bold">DDN INFINIA</text>
+                <text x="92" y="254" textAnchor="middle" fill="#00C280" fontSize="9">150× Faster Retrieval</text>
+                <text x="92" y="270" textAnchor="middle" fill="#00C280" fontSize="9">6.5ms avg GET latency</text>
+                <text x="92" y="286" textAnchor="middle" fill="#888888" fontSize="8">vs 988ms Traditional Storage</text>
+                <text x="92" y="296" textAnchor="middle" fill="#555555" fontSize="7">@ 500 concurrent readers</text>
               </g>
 
-              {/* Legend */}
+              {/* ── Legend ────────────────────────────────────────────────── */}
               <g id="legend">
-                <text x="30" y="440" fill="#E31B23" fontSize="11" fontWeight="bold">DDN INFINIA Storage</text>
-                <text x="30" y="458" fill="#76B900" fontSize="11" fontWeight="bold">NVIDIA NeMo AI</text>
-                <text x="30" y="476" fill="#FFD700" fontSize="11" fontWeight="bold">--- User Query Path</text>
+                <rect x="18" y="320" width="12" height="12" rx="2" fill="#E31B23" />
+                <text x="36" y="331" fill="#E31B23" fontSize="10" fontWeight="bold">DDN INFINIA Storage</text>
+                <rect x="18" y="338" width="12" height="12" rx="2" fill="#76B900" />
+                <text x="36" y="349" fill="#76B900" fontSize="10" fontWeight="bold">NVIDIA NeMo AI Stack</text>
+                <line x1="18" y1="362" x2="30" y2="362" stroke="#FFD700" strokeWidth="2" strokeDasharray="4,2" />
+                <text x="36" y="367" fill="#FFD700" fontSize="10" fontWeight="bold">User Query Path</text>
+                <line x1="18" y1="380" x2="30" y2="380" stroke="#76B900" strokeWidth="1.5" strokeDasharray="4,2" />
+                <text x="36" y="385" fill="#888888" fontSize="9">Query Embedding layer (new)</text>
               </g>
             </svg>
           </div>
+
 
           {/* Infrastructure Partners */}
           <div className="mt-12">
@@ -659,10 +685,10 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             </div>
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Pipeline Stages Section */}
-      <section className="bg-surface-base px-6 py-16">
+      < section className="bg-surface-base px-6 py-16" >
         <div className="max-w-[1280px] mx-auto">
           <div className="text-center mb-10">
             <span className="eyebrow text-ddn-red">Step by Step</span>
@@ -741,10 +767,10 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             </div>
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Performance Metrics Section */}
-      <section className="bg-surface-base px-6 py-16">
+      < section className="bg-surface-base px-6 py-16" >
         <div className="max-w-[1280px] mx-auto">
           <div className="text-center mb-10">
             <span className="eyebrow text-ddn-red">Benchmarks</span>
@@ -808,10 +834,10 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             </p>
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Technology Stack Section */}
-      <section className="bg-surface-primary px-6 py-16">
+      < section className="bg-surface-primary px-6 py-16" >
         <div className="max-w-[1280px] mx-auto">
           <div className="text-center mb-10">
             <span className="eyebrow text-nvidia-green">Under the Hood</span>
@@ -938,12 +964,13 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             Results may vary based on network conditions, document complexity, and system load.
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Business Impact Hero - moved after use cases */}
-      <section className="relative overflow-hidden" style={{
+      < section className="relative overflow-hidden" style={{
         background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%)',
-      }}>
+      }
+      }>
         <div
           className="absolute inset-0 opacity-20"
           style={{
@@ -1022,10 +1049,10 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             ))}
           </motion.div>
         </div>
-      </section>
+      </section >
 
       {/* CTA Section */}
-      <section className="px-6 py-20" style={{ background: 'linear-gradient(135deg, var(--ddn-red) 0%, var(--ddn-red-hover) 100%)' }}>
+      < section className="px-6 py-20" style={{ background: 'linear-gradient(135deg, var(--ddn-red) 0%, var(--ddn-red-hover) 100%)' }}>
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -1066,17 +1093,17 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             </button>
           </motion.div>
         </div>
-      </section>
+      </section >
 
       {/* Footer */}
-      <section className="bg-neutral-900 px-6 py-8">
+      < section className="bg-neutral-900 px-6 py-8" >
         <div className="max-w-[1280px] mx-auto text-center">
           <p className="text-white/40 text-sm">
             DDN INFINIA RAG Performance Demo
           </p>
         </div>
-      </section>
-    </div>
+      </section >
+    </div >
   )
 }
 
