@@ -182,12 +182,6 @@ async def upload_document(file: UploadFile = File(...)):
         # Process document
         chunks = document_processor.process_file(tmp_path)
 
-        # Cap chunks for demo environments (prevents 4000+ S3 calls for very large files)
-        MAX_CHUNKS = 500
-        if len(chunks) > MAX_CHUNKS:
-            logger.warning(f"⚠️  Large file: {len(chunks)} chunks — capped at {MAX_CHUNKS} for demo")
-            chunks = chunks[:MAX_CHUNKS]
-
         # Run add_chunks in a thread pool so uvicorn event loop stays
         # responsive to health checks during long S3 storage operations
         loop = asyncio.get_event_loop()
