@@ -197,7 +197,7 @@ function GtcOutcomesSection({ onStartDemo }: { onStartDemo?: () => void }) {
               <span className="text-neutral-400 font-normal">Micro-benchmark of a full production RAG pipeline</span>
             </div>
             <div className="px-5 py-4 border-r border-neutral-200">
-              <strong className="text-neutral-800">150× faster retrieval</strong> (6.5ms vs 988ms) at 50 concurrent users. Flat DDN latency = predictable SLAs at any scale including hyperscaler-level traffic spikes.
+              <strong className="text-neutral-800">150× faster retrieval</strong> (6.5ms vs 988ms) at 500 concurrent users. Flat DDN latency = predictable SLAs at any scale including hyperscaler-level traffic spikes.
             </div>
             <div className="px-5 py-4 border-r border-neutral-200">
               <strong className="text-neutral-800">$52M/yr</strong> in H100 GPU time recovered at 100M queries/day. Eliminates S3 egress fees ($1.6M–$6.5M/yr). Defers GPU cluster expansion.
