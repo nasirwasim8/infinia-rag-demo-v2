@@ -288,9 +288,13 @@ async def query_rag(request: QueryRequest):
                     total_time_ms=(time.perf_counter() - start_time) * 1000
                 )
 
-        # Search vector store with provider comparison
+        # Search vector store — run in thread pool to avoid blocking event loop
+        # (S3 GET calls inside are synchronous boto3 calls)
         logger.info(f"🔎 Performing vector search with top_k={request.top_k}")
-        search_results = vector_store.search_with_provider_comparison(request.query, request.top_k)
+        loop = asyncio.get_event_loop()
+        search_results = await loop.run_in_executor(
+            None, vector_store.search_with_provider_comparison, request.query, request.top_k
+        )
         logger.info(f"   Search returned {len(search_results.get('results', []))} results")
 
         if not search_results['results']:
