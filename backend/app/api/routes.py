@@ -3,6 +3,7 @@ FastAPI routes for DDN RAG application.
 """
 import os
 import time
+import asyncio
 import tempfile
 import logging
 from typing import List
@@ -181,8 +182,16 @@ async def upload_document(file: UploadFile = File(...)):
         # Process document
         chunks = document_processor.process_file(tmp_path)
 
-        # Add to vector store
-        results = vector_store.add_chunks(chunks)
+        # Cap chunks for demo environments (prevents 4000+ S3 calls for very large files)
+        MAX_CHUNKS = 500
+        if len(chunks) > MAX_CHUNKS:
+            logger.warning(f"⚠️  Large file: {len(chunks)} chunks — capped at {MAX_CHUNKS} for demo")
+            chunks = chunks[:MAX_CHUNKS]
+
+        # Run add_chunks in a thread pool so uvicorn event loop stays
+        # responsive to health checks during long S3 storage operations
+        loop = asyncio.get_event_loop()
+        results = await loop.run_in_executor(None, vector_store.add_chunks, chunks)
         
         logger.info(f"✅ Upload complete: {file.filename}")
         logger.info(f"   Total chunks after upload: {vector_store.total_chunks}")
