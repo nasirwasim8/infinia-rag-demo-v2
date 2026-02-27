@@ -23,10 +23,16 @@ function ScalingChart({ scalePoints, ddnLatencies, awsLatencies, awsSimulated }:
   const gridCount = 4
   return (
     <div className="mt-4">
-      <div className="flex items-center gap-6 mb-3 text-xs">
-        <span className="flex items-center gap-1.5"><span className="inline-block w-5 h-0.5 bg-red-500 rounded" /><span className="font-medium text-red-600">DDN INFINIA</span></span>
-        <span className="flex items-center gap-1.5"><span className="inline-block w-5 border-t-2 border-dashed border-slate-400" /><span className="text-slate-500">AWS S3{awsSimulated ? ' (simulated)' : ''}</span></span>
-        <span className="ml-auto text-slate-400">Concurrent Requests →</span>
+      <div className="flex items-center gap-8 mb-4 text-sm">
+        <span className="flex items-center gap-2">
+          <span className="inline-block w-6 h-0.5 bg-red-500 rounded" />
+          <span className="font-semibold text-red-600">DDN INFINIA</span>
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="inline-block w-6 border-t-2 border-dashed border-slate-400" />
+          <span className="font-medium text-slate-500">AWS S3{awsSimulated ? ' (simulated)' : ''}</span>
+        </span>
+        <span className="ml-auto text-sm text-slate-400">Concurrent Requests →</span>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 220 }}>
         <g transform={`translate(${M.left},${M.top})`}>
@@ -479,16 +485,28 @@ across all chunk sizes.
             awsLatencies={scalingData.aws_latencies}
             awsSimulated={scalingData.aws_simulated}
           />
-          <div className="mt-4 grid grid-cols-2 gap-4 text-xs text-neutral-600">
-            <div className="bg-red-50 rounded-lg p-3 border border-red-100">
-              <div className="font-semibold text-red-700 mb-1">🚀 DDN INFINIA</div>
-              <div>Avg: {(scalingData.ddn_latencies.reduce((a, b) => a + b, 0) / scalingData.ddn_latencies.length).toFixed(1)}ms</div>
-              <div>Max: {Math.max(...scalingData.ddn_latencies).toFixed(1)}ms</div>
+          <div className="mt-5 grid grid-cols-2 gap-4 text-sm text-neutral-600">
+            <div className="bg-red-50 rounded-lg p-4 border border-red-100">
+              <div className="flex items-center gap-2 font-semibold text-red-700 mb-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <ellipse cx="12" cy="5" rx="9" ry="3" />
+                  <path d="M3 5v6a9 3 0 0 0 18 0V5" />
+                  <path d="M3 11v6a9 3 0 0 0 18 0v-6" />
+                </svg>
+                DDN INFINIA
+              </div>
+              <div className="text-base font-medium">Avg: {(scalingData.ddn_latencies.reduce((a, b) => a + b, 0) / scalingData.ddn_latencies.length).toFixed(1)}ms</div>
+              <div className="text-base">Max: {Math.max(...scalingData.ddn_latencies).toFixed(1)}ms</div>
             </div>
-            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-              <div className="font-semibold text-slate-600 mb-1">☁️ AWS S3</div>
-              <div>Avg: {(scalingData.aws_latencies.reduce((a, b) => a + b, 0) / scalingData.aws_latencies.length).toFixed(1)}ms</div>
-              <div>Max: {Math.max(...scalingData.aws_latencies).toFixed(1)}ms</div>
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+              <div className="flex items-center gap-2 font-semibold text-slate-600 mb-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+                </svg>
+                AWS S3
+              </div>
+              <div className="text-base font-medium">Avg: {(scalingData.aws_latencies.reduce((a, b) => a + b, 0) / scalingData.aws_latencies.length).toFixed(1)}ms</div>
+              <div className="text-base">Max: {Math.max(...scalingData.aws_latencies).toFixed(1)}ms</div>
             </div>
           </div>
         </div>
