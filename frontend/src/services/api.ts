@@ -298,6 +298,17 @@ export const api = {
     const response = await axiosInstance.post('/benchmarks/multi-size')
     return response.data
   },
+
+  runScalingBenchmark: async (): Promise<{
+    success: boolean
+    scale_points: number[]
+    ddn_latencies: number[]
+    aws_latencies: number[]
+    aws_simulated: boolean
+  }> => {
+    const response = await axiosInstance.post('/benchmarks/scaling')
+    return response.data
+  },
 }
 
 // Legacy exports for backward compatibility

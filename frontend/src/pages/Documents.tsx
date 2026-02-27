@@ -1,9 +1,77 @@
 import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Upload, FileText, Trash2, Loader2, CheckCircle, Zap, Play, BarChart3, Info } from 'lucide-react'
+import { Upload, FileText, Trash2, Loader2, CheckCircle, Zap, Play, BarChart3, Info, TrendingUp } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { uploadMultipleDocuments, clearDocuments, getDocumentCount, api } from '../services/api'
+
+// ── Scaling Chart Component (inline SVG, no extra dependencies) ───────────────
+function ScalingChart({ scalePoints, ddnLatencies, awsLatencies, awsSimulated }: {
+  scalePoints: number[]
+  ddnLatencies: number[]
+  awsLatencies: number[]
+  awsSimulated: boolean
+}) {
+  const W = 520, H = 220
+  const M = { top: 20, right: 20, bottom: 44, left: 68 }
+  const cW = W - M.left - M.right
+  const cH = H - M.top - M.bottom
+  const maxY = Math.max(...awsLatencies, ...ddnLatencies) * 1.15
+  const xS = (i: number) => (i / (scalePoints.length - 1)) * cW
+  const yS = (v: number) => cH - (v / maxY) * cH
+  const path = (vals: number[]) => vals.map((v, i) => `${i === 0 ? 'M' : 'L'}${xS(i).toFixed(1)},${yS(v).toFixed(1)}`).join(' ')
+  const gridCount = 4
+  return (
+    <div className="mt-4">
+      <div className="flex items-center gap-6 mb-3 text-xs">
+        <span className="flex items-center gap-1.5"><span className="inline-block w-5 h-0.5 bg-red-500 rounded" /><span className="font-medium text-red-600">DDN INFINIA</span></span>
+        <span className="flex items-center gap-1.5"><span className="inline-block w-5 border-t-2 border-dashed border-slate-400" /><span className="text-slate-500">AWS S3{awsSimulated ? ' (simulated)' : ''}</span></span>
+        <span className="ml-auto text-slate-400">Concurrent Requests →</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 220 }}>
+        <g transform={`translate(${M.left},${M.top})`}>
+          {/* Grid */}
+          {Array.from({ length: gridCount + 1 }, (_, i) => {
+            const v = (maxY / gridCount) * i
+            const y = yS(v)
+            return (
+              <g key={i}>
+                <line x1={0} y1={y} x2={cW} y2={y} stroke="#f1f5f9" strokeWidth={1} />
+                <text x={-8} y={y + 4} textAnchor="end" fontSize={9} fill="#94a3b8">{Math.round(v)}</text>
+              </g>
+            )
+          })}
+          {/* X labels */}
+          {scalePoints.map((p, i) => (
+            <text key={i} x={xS(i)} y={cH + 16} textAnchor="middle" fontSize={9} fill="#94a3b8">{p}</text>
+          ))}
+          {/* Axes */}
+          <line x1={0} y1={0} x2={0} y2={cH} stroke="#e2e8f0" strokeWidth={1} />
+          <line x1={0} y1={cH} x2={cW} y2={cH} stroke="#e2e8f0" strokeWidth={1} />
+          {/* AWS line (dashed gray) */}
+          <path d={path(awsLatencies)} fill="none" stroke="#94a3b8" strokeWidth={2} strokeDasharray="6,3" />
+          {/* DDN line (solid red) */}
+          <path d={path(ddnLatencies)} fill="none" stroke="#dc2626" strokeWidth={2.5} />
+          {/* DDN dots */}
+          {ddnLatencies.map((v, i) => (
+            <circle key={i} cx={xS(i)} cy={yS(v)} r={4} fill="#dc2626">
+              <title>DDN INFINIA @ {scalePoints[i]} concurrent: {v}ms</title>
+            </circle>
+          ))}
+          {/* AWS dots */}
+          {awsLatencies.map((v, i) => (
+            <circle key={i} cx={xS(i)} cy={yS(v)} r={4} fill="#94a3b8">
+              <title>AWS S3 @ {scalePoints[i]} concurrent: {v.toFixed(1)}ms</title>
+            </circle>
+          ))}
+          {/* Y-axis label */}
+          <text x={-50} y={cH / 2} textAnchor="middle" fontSize={9} fill="#94a3b8"
+            transform={`rotate(-90,-50,${cH / 2})`}>Latency (ms)</text>
+        </g>
+      </svg>
+    </div>
+  )
+}
 
 export default function DocumentsPage() {
   const queryClient = useQueryClient()
@@ -12,6 +80,9 @@ export default function DocumentsPage() {
   const [useNvIngest, setUseNvIngest] = useState(true)
   const [processingResults, setProcessingResults] = useState<string>('')
   const [benchmarkResults, setBenchmarkResults] = useState<string>('')
+  const [scalingData, setScalingData] = useState<{
+    scale_points: number[]; ddn_latencies: number[]; aws_latencies: number[]; aws_simulated: boolean
+  } | null>(null)
 
   const { data: docCount } = useQuery({
     queryKey: ['documentCount'],
@@ -177,6 +248,17 @@ across all chunk sizes.
     }
   })
 
+  const scalingBenchmarkMutation = useMutation({
+    mutationFn: async () => api.runScalingBenchmark(),
+    onSuccess: (data) => {
+      setScalingData(data)
+      toast.success('📊 Scaling benchmark complete')
+    },
+    onError: (error: any) => {
+      toast.error(`Scaling test failed: ${error.message}`)
+    }
+  })
+
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       uploadMutation.mutate(acceptedFiles)
@@ -337,6 +419,19 @@ across all chunk sizes.
             )}
             Multi-Size Test
           </button>
+
+          <button
+            onClick={() => scalingBenchmarkMutation.mutate()}
+            disabled={scalingBenchmarkMutation.isPending}
+            className="btn-secondary flex items-center gap-2"
+          >
+            {scalingBenchmarkMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <TrendingUp className="w-4 h-4" />
+            )}
+            {scalingBenchmarkMutation.isPending ? 'Running Scaling Test...' : 'Scaling Test'}
+          </button>
         </div>
 
         {/* Benchmark Results */}
@@ -358,6 +453,46 @@ across all chunk sizes.
           </div>
         )}
       </div>
+
+      {/* Scaling Benchmark Chart */}
+      {scalingData && (
+        <div className="card p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="w-5 h-5 text-ddn-red" />
+            <h3 className="font-semibold text-neutral-900">DDN Doesn't Slow Down</h3>
+            <span className="ml-auto text-xs text-neutral-400">
+              {scalingData.aws_simulated ? 'AWS metrics simulated' : 'Real AWS data'}
+            </span>
+          </div>
+          <p className="text-xs text-neutral-500 mb-4">
+            GET latency at increasing concurrent request load — DDN INFINIA stays flat, S3 degrades
+          </p>
+          {scalingData.aws_simulated && (
+            <div className="alert alert-info mb-4">
+              <Info className="w-4 h-4" />
+              <span><strong>AWS S3 metrics are simulated</strong> with realistic degradation model. Configure AWS credentials for real comparison data.</span>
+            </div>
+          )}
+          <ScalingChart
+            scalePoints={scalingData.scale_points}
+            ddnLatencies={scalingData.ddn_latencies}
+            awsLatencies={scalingData.aws_latencies}
+            awsSimulated={scalingData.aws_simulated}
+          />
+          <div className="mt-4 grid grid-cols-2 gap-4 text-xs text-neutral-600">
+            <div className="bg-red-50 rounded-lg p-3 border border-red-100">
+              <div className="font-semibold text-red-700 mb-1">🚀 DDN INFINIA</div>
+              <div>Avg: {(scalingData.ddn_latencies.reduce((a, b) => a + b, 0) / scalingData.ddn_latencies.length).toFixed(1)}ms</div>
+              <div>Max: {Math.max(...scalingData.ddn_latencies).toFixed(1)}ms</div>
+            </div>
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+              <div className="font-semibold text-slate-600 mb-1">☁️ AWS S3</div>
+              <div>Avg: {(scalingData.aws_latencies.reduce((a, b) => a + b, 0) / scalingData.aws_latencies.length).toFixed(1)}ms</div>
+              <div>Max: {Math.max(...scalingData.aws_latencies).toFixed(1)}ms</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Processing Results */}
       {processingResults && (
