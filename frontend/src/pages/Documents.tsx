@@ -521,15 +521,37 @@ across all chunk sizes.
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-neutral-600">
               <div className="bg-white rounded-lg p-3 border border-neutral-100">
-                <div className="font-semibold text-neutral-800 mb-1">⚡ Predictable SLAs</div>
+                <div className="flex items-center gap-1.5 font-semibold text-neutral-800 mb-1">
+                  <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                  </svg>
+                  Predictable SLAs
+                </div>
                 <p>RAG pipelines chain retrieval → rerank → LLM. A spike at the storage layer ripples into every user’s response time. DDN’s flat latency curve means your p99 stays predictable — even under 50× concurrent load.</p>
               </div>
               <div className="bg-white rounded-lg p-3 border border-neutral-100">
-                <div className="font-semibold text-neutral-800 mb-1">🧠 Maximum GPU Utilization</div>
+                <div className="flex items-center gap-1.5 font-semibold text-neutral-800 mb-1">
+                  <svg className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                    <rect x="9" y="9" width="6" height="6" />
+                    <line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" />
+                    <line x1="9" y1="20" x2="9" y2="23" /><line x1="15" y1="20" x2="15" y2="23" />
+                    <line x1="20" y1="9" x2="23" y2="9" /><line x1="20" y1="14" x2="23" y2="14" />
+                    <line x1="1" y1="9" x2="4" y2="9" /><line x1="1" y1="14" x2="4" y2="14" />
+                  </svg>
+                  Maximum GPU Utilization
+                </div>
                 <p>When retrieval is fast and consistent, the GPU never waits for data. S3 latency spikes starve the GPU of context, wasting expensive compute cycles. DDN keeps the inference pipeline fed at full throughput.</p>
               </div>
               <div className="bg-white rounded-lg p-3 border border-neutral-100">
-                <div className="font-semibold text-neutral-800 mb-1">🏭 Scale Without Re-Architecture</div>
+                <div className="flex items-center gap-1.5 font-semibold text-neutral-800 mb-1">
+                  <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                    <polyline points="2 17 12 22 22 17" />
+                    <polyline points="2 12 12 17 22 12" />
+                  </svg>
+                  Scale Without Re-Architecture
+                </div>
                 <p>As your RAG deployment grows from 10 to 500 concurrent users, DDN INFINIA holds its latency profile. S3 degrades — forcing costly re-architecture or throttling. DDN lets you scale PoC to production on day one.</p>
               </div>
             </div>
