@@ -18,7 +18,7 @@ export default function ContinuousIngestionPage() {
   const [directoryListing, setDirectoryListing] = useState<any[]>([])
   const [showSummary, setShowSummary] = useState(false)
 
-  const { data: healthData } = useQuery({
+  useQuery({
     queryKey: ['health'],
     queryFn: api.getHealth,
   })
