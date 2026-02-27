@@ -509,6 +509,31 @@ across all chunk sizes.
               <div className="text-base">Max: {Math.max(...scalingData.aws_latencies).toFixed(1)}ms</div>
             </div>
           </div>
+
+          {/* Business Outcome */}
+          <div className="mt-5 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <svg className="w-4 h-4 text-ddn-red flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                <polyline points="16 7 22 7 22 13" />
+              </svg>
+              <span className="text-sm font-semibold text-neutral-800">Business Outcome — Why Consistency Matters</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-neutral-600">
+              <div className="bg-white rounded-lg p-3 border border-neutral-100">
+                <div className="font-semibold text-neutral-800 mb-1">⚡ Predictable SLAs</div>
+                <p>RAG pipelines chain retrieval → rerank → LLM. A spike at the storage layer ripples into every user’s response time. DDN’s flat latency curve means your p99 stays predictable — even under 50× concurrent load.</p>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-neutral-100">
+                <div className="font-semibold text-neutral-800 mb-1">🧠 Maximum GPU Utilization</div>
+                <p>When retrieval is fast and consistent, the GPU never waits for data. S3 latency spikes starve the GPU of context, wasting expensive compute cycles. DDN keeps the inference pipeline fed at full throughput.</p>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-neutral-100">
+                <div className="font-semibold text-neutral-800 mb-1">🏭 Scale Without Re-Architecture</div>
+                <p>As your RAG deployment grows from 10 to 500 concurrent users, DDN INFINIA holds its latency profile. S3 degrades — forcing costly re-architecture or throttling. DDN lets you scale PoC to production on day one.</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
