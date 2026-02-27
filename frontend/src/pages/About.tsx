@@ -36,12 +36,12 @@ function GtcOutcomesSection() {
     },
     {
       label: 'Financial Outcome',
-      accent: 'text-amber-400',
-      border: 'border-amber-500/30',
-      bg: 'bg-amber-500/5',
-      iconColor: '#f59e0b',
+      accent: 'text-orange-500',
+      border: 'border-orange-500/30',
+      bg: 'bg-orange-500/5',
+      iconColor: '#f97316',
       badge: '$52M/yr at xAI Scale',
-      badgeBg: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
+      badgeBg: 'bg-orange-500/10 border-orange-500/30 text-orange-500',
       summary: 'At 100M queries/day, DDN eliminates 171M GPU-seconds of storage wait — $142K/day in recovered compute at H100 rates.',
       icon: (
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -94,18 +94,22 @@ function GtcOutcomesSection() {
         {/* Header */}
         <div className="text-center mb-10">
           {/* GTC Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 mb-4">
-            <svg className="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-500/40 bg-orange-500/10 mb-4">
+            <svg className="w-3.5 h-3.5 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
-            <span className="text-amber-400 text-xs font-bold tracking-widest uppercase">GTC 2026 Showcase</span>
+            <span className="text-orange-500 text-xs font-bold tracking-widest uppercase">GTC 2026 Showcase</span>
           </div>
           <span className="eyebrow text-ddn-red block">Strategic Value Framework</span>
           <h2 className="heading-2 mt-2 mb-3">End-to-End RAG Pipeline — Business Case</h2>
           <p className="body-text max-w-3xl mx-auto">
-            This demo is a <strong>calibrated micro-benchmark</strong> — a controlled proof point of every component in a production RAG pipeline.
-            The numbers are deliberately reproducible at small scale so every variable is visible.
-            At xAI, Grok, or Cohere volume, multiply every latency advantage by 100 million queries per day.
+            This demo is a <strong>calibrated, live micro-benchmark</strong> — run the Scaling Test at{' '}
+            <strong>50, 200, or 500 concurrent GET requests</strong> and watch DDN INFINIA hold flat
+            latency in real time while S3 visibly degrades under increasing load. Every number on this
+            page is <strong>measured, not modelled</strong>. The three cards below take those live
+            read-latency results and extrapolate them to hyperscaler volumes — so when xAI, Grok, or
+            your enterprise AI team asks <em>"what does this mean at our scale?"</em> every answer
+            is backed by data you just ran yourself.
           </p>
         </div>
 
@@ -123,26 +127,26 @@ function GtcOutcomesSection() {
               {/* Icon + Label */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: col.iconColor + '18', color: col.iconColor }}>
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: col.iconColor + '18', color: col.iconColor }}>
                     {col.icon}
                   </div>
-                  <span className={`text-sm font-bold tracking-wide uppercase ${col.accent}`}>{col.label}</span>
+                  <span className={`text-lg font-bold leading-tight ${col.accent}`}>{col.label}</span>
                 </div>
                 <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-300 ${col.accent} ${open === i ? 'rotate-180' : ''}`}
+                  className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${col.accent} ${open === i ? 'rotate-180' : ''}`}
                 />
               </div>
 
               {/* Badge */}
-              <div className={`inline-block px-3 py-1 rounded-full border text-xs font-bold mb-3 ${col.badgeBg}`}>
+              <div className={`inline-block px-3 py-1 rounded-full border text-sm font-bold mb-3 ${col.badgeBg}`}>
                 {col.badge}
               </div>
 
               {/* Summary */}
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{col.summary}</p>
+              <p className="text-base leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{col.summary}</p>
 
-              <p className={`text-xs mt-3 font-medium ${col.accent}`}>
-                {open === i ? 'Click to collapse' : 'Click to see extrapolated numbers →'}
+              <p className={`text-sm mt-4 font-semibold ${col.accent}`}>
+                {open === i ? '▲ Collapse detail' : '▼ See extrapolated numbers'}
               </p>
             </motion.div>
           ))}
@@ -161,13 +165,13 @@ function GtcOutcomesSection() {
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: columns[open].iconColor + '18', color: columns[open].iconColor }}>
                 {columns[open].icon}
               </div>
-              <h3 className={`text-base font-bold ${columns[open].accent}`}>{columns[open].label} — Detail</h3>
+              <h3 className={`text-xl font-bold ${columns[open].accent}`}>{columns[open].label} — Extrapolated</h3>
             </div>
             <div className="divide-y divide-neutral-100">
               {columns[open].details.map((d, j) => (
-                <div key={j} className="py-3 grid md:grid-cols-[200px_1fr] gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400">{d.label}</span>
-                  <span className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{d.value}</span>
+                <div key={j} className="py-4 grid md:grid-cols-[220px_1fr] gap-3">
+                  <span className="text-sm font-bold uppercase tracking-wide text-neutral-500">{d.label}</span>
+                  <span className="text-base leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{d.value}</span>
                 </div>
               ))}
             </div>
