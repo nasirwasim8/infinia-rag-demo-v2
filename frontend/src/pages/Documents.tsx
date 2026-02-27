@@ -13,14 +13,39 @@ function ScalingChart({ scalePoints, ddnLatencies, awsLatencies, awsSimulated }:
   awsSimulated: boolean
 }) {
   const W = 520, H = 220
-  const M = { top: 20, right: 20, bottom: 44, left: 68 }
+  const M = { top: 20, right: 20, bottom: 44, left: 72 }
   const cW = W - M.left - M.right
   const cH = H - M.top - M.bottom
-  const maxY = Math.max(...awsLatencies, ...ddnLatencies) * 1.15
+
+  // ── Logarithmic Y scale ───────────────────────────────────────────────────
+  // log scale separates DDN (5-10ms) from AWS (300-1000ms) visually
+  const allVals = [...awsLatencies, ...ddnLatencies].filter(v => v > 0)
+  const minVal = Math.max(1, Math.min(...allVals) * 0.5)      // floor near DDN values
+  const maxVal = Math.max(...allVals) * 1.25                  // headroom above AWS peak
+  const logMin = Math.log10(minVal)
+  const logMax = Math.log10(maxVal)
+  const logRange = logMax - logMin
+
+  const yLog = (v: number) => {
+    const bounded = Math.max(minVal, v)
+    return cH - ((Math.log10(bounded) - logMin) / logRange) * cH
+  }
+
   const xS = (i: number) => (i / (scalePoints.length - 1)) * cW
-  const yS = (v: number) => cH - (v / maxY) * cH
-  const path = (vals: number[]) => vals.map((v, i) => `${i === 0 ? 'M' : 'L'}${xS(i).toFixed(1)},${yS(v).toFixed(1)}`).join(' ')
-  const gridCount = 4
+  const path = (vals: number[]) =>
+    vals.map((v, i) => `${i === 0 ? 'M' : 'L'}${xS(i).toFixed(1)},${yLog(v).toFixed(1)}`).join(' ')
+
+  // Nice log-spaced grid lines: powers of 10 and halves
+  const gridVals: number[] = []
+  for (let p = Math.floor(logMin); p <= Math.ceil(logMax); p++) {
+    [1, 2, 5].forEach(m => {
+      const v = m * Math.pow(10, p)
+      if (v >= minVal && v <= maxVal) gridVals.push(v)
+    })
+  }
+  // Deduplicate and sort
+  const gridLines = [...new Set(gridVals)].sort((a, b) => a - b)
+
   return (
     <div className="mt-4">
       <div className="flex items-center gap-8 mb-4 text-sm">
@@ -36,43 +61,60 @@ function ScalingChart({ scalePoints, ddnLatencies, awsLatencies, awsSimulated }:
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 220 }}>
         <g transform={`translate(${M.left},${M.top})`}>
-          {/* Grid */}
-          {Array.from({ length: gridCount + 1 }, (_, i) => {
-            const v = (maxY / gridCount) * i
-            const y = yS(v)
+          {/* Log-spaced grid lines */}
+          {gridLines.map((v, i) => {
+            const y = yLog(v)
+            const label = v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v >= 100 ? Math.round(v).toString() : v.toFixed(0)
             return (
               <g key={i}>
                 <line x1={0} y1={y} x2={cW} y2={y} stroke="#f1f5f9" strokeWidth={1} />
-                <text x={-8} y={y + 4} textAnchor="end" fontSize={9} fill="#94a3b8">{Math.round(v)}</text>
+                <text x={-8} y={y + 4} textAnchor="end" fontSize={9} fill="#64748b" fontWeight="600">{label}</text>
               </g>
             )
           })}
           {/* X labels */}
           {scalePoints.map((p, i) => (
-            <text key={i} x={xS(i)} y={cH + 16} textAnchor="middle" fontSize={9} fill="#94a3b8">{p}</text>
+            <text key={i} x={xS(i)} y={cH + 16} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight="500">{p}</text>
           ))}
           {/* Axes */}
-          <line x1={0} y1={0} x2={0} y2={cH} stroke="#e2e8f0" strokeWidth={1} />
-          <line x1={0} y1={cH} x2={cW} y2={cH} stroke="#e2e8f0" strokeWidth={1} />
+          <line x1={0} y1={0} x2={0} y2={cH} stroke="#cbd5e1" strokeWidth={1.5} />
+          <line x1={0} y1={cH} x2={cW} y2={cH} stroke="#cbd5e1" strokeWidth={1.5} />
+          {/* AWS area fill (subtle) */}
+          <path
+            d={`${path(awsLatencies)} L${xS(awsLatencies.length - 1).toFixed(1)},${cH} L0,${cH} Z`}
+            fill="#94a3b8" fillOpacity={0.06}
+          />
           {/* AWS line (dashed gray) */}
           <path d={path(awsLatencies)} fill="none" stroke="#94a3b8" strokeWidth={2} strokeDasharray="6,3" />
+          {/* DDN area fill (subtle red) */}
+          <path
+            d={`${path(ddnLatencies)} L${xS(ddnLatencies.length - 1).toFixed(1)},${cH} L0,${cH} Z`}
+            fill="#dc2626" fillOpacity={0.06}
+          />
           {/* DDN line (solid red) */}
           <path d={path(ddnLatencies)} fill="none" stroke="#dc2626" strokeWidth={2.5} />
           {/* DDN dots */}
           {ddnLatencies.map((v, i) => (
-            <circle key={i} cx={xS(i)} cy={yS(v)} r={4} fill="#dc2626">
+            <circle key={i} cx={xS(i)} cy={yLog(v)} r={4} fill="#dc2626">
               <title>DDN INFINIA @ {scalePoints[i]} concurrent: {v}ms</title>
             </circle>
           ))}
           {/* AWS dots */}
           {awsLatencies.map((v, i) => (
-            <circle key={i} cx={xS(i)} cy={yS(v)} r={4} fill="#94a3b8">
+            <circle key={i} cx={xS(i)} cy={yLog(v)} r={4} fill="#94a3b8">
               <title>AWS S3 @ {scalePoints[i]} concurrent: {v.toFixed(1)}ms</title>
             </circle>
           ))}
-          {/* Y-axis label */}
-          <text x={-50} y={cH / 2} textAnchor="middle" fontSize={9} fill="#94a3b8"
-            transform={`rotate(-90,-50,${cH / 2})`}>Latency (ms)</text>
+          {/* Y-axis label — bold and clearly visible */}
+          <text
+            x={-54} y={cH / 2} textAnchor="middle" fontSize={11}
+            fill="#334155" fontWeight="700" letterSpacing="0.3"
+            transform={`rotate(-90,-54,${cH / 2})`}
+          >
+            Latency (ms)
+          </text>
+          {/* Log scale indicator */}
+          <text x={cW} y={-6} textAnchor="end" fontSize={8} fill="#94a3b8" fontStyle="italic">log scale</text>
         </g>
       </svg>
     </div>
