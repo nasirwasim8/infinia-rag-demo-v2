@@ -565,7 +565,7 @@ across all chunk sizes.
                   </svg>
                   Scale Without Re-Architecture
                 </div>
-                <p>As your RAG deployment grows from 10 to 500 concurrent users, DDN INFINIA holds its latency profile. S3 degrades — forcing costly re-architecture or throttling. DDN lets you scale PoC to production on day one.</p>
+                <p>As your RAG deployment scales from hundreds to <strong>50,000+ concurrent users</strong>, DDN INFINIA holds its latency profile. S3 degrades under enterprise load — forcing costly re-architecture or throttling. DDN lets you go from PoC to hyperscale production without changing a line of infrastructure code.</p>
               </div>
             </div>
           </div>
