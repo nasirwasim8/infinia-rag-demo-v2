@@ -299,14 +299,14 @@ export const api = {
     return response.data
   },
 
-  runScalingBenchmark: async (): Promise<{
+  runScalingBenchmark: async (maxConcurrency: number = 50): Promise<{
     success: boolean
     scale_points: number[]
     ddn_latencies: number[]
     aws_latencies: number[]
     aws_simulated: boolean
   }> => {
-    const response = await axiosInstance.post('/benchmarks/scaling')
+    const response = await axiosInstance.post('/benchmarks/scaling', { max_concurrency: maxConcurrency })
     return response.data
   },
 }

@@ -89,6 +89,7 @@ export default function DocumentsPage() {
   const [scalingData, setScalingData] = useState<{
     scale_points: number[]; ddn_latencies: number[]; aws_latencies: number[]; aws_simulated: boolean
   } | null>(null)
+  const [scaleMode, setScaleMode] = useState<50 | 200 | 500>(50)
 
   const { data: docCount } = useQuery({
     queryKey: ['documentCount'],
@@ -255,7 +256,7 @@ across all chunk sizes.
   })
 
   const scalingBenchmarkMutation = useMutation({
-    mutationFn: async () => api.runScalingBenchmark(),
+    mutationFn: async () => api.runScalingBenchmark(scaleMode),
     onSuccess: (data) => {
       setScalingData(data)
       toast.success('📊 Scaling benchmark complete')
@@ -426,18 +427,30 @@ across all chunk sizes.
             Multi-Size Test
           </button>
 
-          <button
-            onClick={() => scalingBenchmarkMutation.mutate()}
-            disabled={scalingBenchmarkMutation.isPending}
-            className="btn-secondary flex items-center gap-2"
-          >
-            {scalingBenchmarkMutation.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <TrendingUp className="w-4 h-4" />
-            )}
-            {scalingBenchmarkMutation.isPending ? 'Running Scaling Test...' : 'Scaling Test'}
-          </button>
+          <div className="flex items-center gap-2">
+            <select
+              value={scaleMode}
+              onChange={(e) => setScaleMode(Number(e.target.value) as 50 | 200 | 500)}
+              disabled={scalingBenchmarkMutation.isPending}
+              className="text-xs border border-neutral-200 rounded-lg px-2 py-1.5 bg-white text-neutral-700 focus:outline-none focus:ring-1 focus:ring-ddn-red"
+            >
+              <option value={50}>Standard (1–50) ~30s</option>
+              <option value={200}>Extended (1–200) ~90s</option>
+              <option value={500}>Stress Test (1–500) ~4min</option>
+            </select>
+            <button
+              onClick={() => scalingBenchmarkMutation.mutate()}
+              disabled={scalingBenchmarkMutation.isPending}
+              className="btn-secondary flex items-center gap-2"
+            >
+              {scalingBenchmarkMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <TrendingUp className="w-4 h-4" />
+              )}
+              {scalingBenchmarkMutation.isPending ? 'Running...' : 'Scaling Test'}
+            </button>
+          </div>
         </div>
 
         {/* Benchmark Results */}
