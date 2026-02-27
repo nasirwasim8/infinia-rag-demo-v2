@@ -19,7 +19,7 @@ function GtcOutcomesSection() {
       iconColor: '#10b981',
       badge: '150× Faster Retrieval',
       badgeBg: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
-      summary: 'DDN holds 6.5ms avg read latency at 50 concurrent users. AWS S3 degrades to 988ms under identical load. DDN stays flat. S3 fails under pressure.',
+      summary: (<><strong>DDN holds 6.5ms avg</strong> read latency at 50 concurrent users. <strong>AWS S3 degrades to 988ms</strong> under identical load. DDN stays flat under pressure — S3 does not.</>),
       icon: (
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
           <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
@@ -29,7 +29,7 @@ function GtcOutcomesSection() {
       details: [
         { label: 'Demo proof', value: '4,950 object retrievals — DDN at 6.5ms avg, S3 degraded to 988ms at peak (50 concurrent users)' },
         { label: 'At 5,000 users', value: 'DDN ~6.5ms flat (proven architecture). S3 estimated 3,000–8,000ms — SLA breach territory' },
-        { label: 'At xAI / Grok scale', value: 'DDN holds p99 SLA regardless of traffic spike. S3 turns every viral moment into a P0 incident' },
+        { label: 'At Hyperscaler Scale', value: 'DDN holds p99 SLA regardless of traffic spike. S3 turns every surge into a P0 incident' },
         { label: 'User experience', value: 'Real-time token streaming shown live. TTFT drops 340ms. Users feel the difference immediately' },
         { label: 'C-suite headline', value: '"Our AI answers are only as fast as the slowest component. With DDN, that bottleneck is gone."' },
       ]
@@ -40,9 +40,9 @@ function GtcOutcomesSection() {
       border: 'border-orange-500/30',
       bg: 'bg-orange-500/5',
       iconColor: '#f97316',
-      badge: '$52M/yr at xAI Scale',
+      badge: '$52M/yr at Hyperscaler Scale',
       badgeBg: 'bg-orange-500/10 border-orange-500/30 text-orange-500',
-      summary: 'At 100M queries/day, DDN eliminates 171M GPU-seconds of storage wait — $142K/day in recovered compute at H100 rates.',
+      summary: (<>At 100M queries/day, DDN eliminates <strong>171M GPU-seconds</strong> of storage wait — <strong>$142K/day</strong> in recovered compute at H100 rates.</>),
       icon: (
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
           <line x1="12" y1="1" x2="12" y2="23" />
@@ -53,9 +53,9 @@ function GtcOutcomesSection() {
         { label: 'Methodology', value: '341ms saved per retrieval × 5 chunks/query × $0.000833/GPU-sec (H100 @ $3/hr)' },
         { label: '1M queries/day', value: '$1,420/day · $520K/year in recovered GPU compute' },
         { label: '10M queries/day', value: '$14,200/day · $5.2M/year in recovered GPU compute' },
-        { label: '100M queries/day (xAI tier)', value: '$142,000/day · $52M/year — before egress savings or deferred capex' },
+        { label: '100M queries/day (Hyperscaler tier)', value: '$142,000/day · $52M/year — before egress savings or deferred capex' },
         { label: 'Additional levers', value: 'Eliminate S3 egress fees ($1.6M–$6.5M/yr at enterprise scale) + defer GPU cluster expansion ($250K per cluster avoided per 10% utilization gain)' },
-        { label: 'C-suite headline', value: '"At xAI scale, every ms of storage latency costs $142K/day in GPU time. DDN eliminates 340ms of that waste per query."' },
+        { label: 'C-suite headline', value: '"At hyperscaler scale, every ms of storage latency costs $142K/day in GPU time. DDN eliminates 340ms of that waste per query."' },
       ]
     },
     {
@@ -66,7 +66,7 @@ function GtcOutcomesSection() {
       iconColor: '#f87171',
       badge: 'GPU Saturation >90%',
       badgeBg: 'bg-red-500/10 border-red-500/30 text-red-400',
-      summary: 'Storage ceases to be the GPU bottleneck. TTFT drops 340ms. TPS increases to rated capacity. DDN scales linearly with NVIDIA GPU fleet size.',
+      summary: (<>Storage ceases to be the GPU bottleneck. TTFT drops <strong>340ms</strong>. TPS increases to <strong>rated capacity</strong>. DDN scales linearly with NVIDIA GPU fleet — no ceiling.</>),
       icon: (
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
           <rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" />
@@ -107,9 +107,9 @@ function GtcOutcomesSection() {
             <strong>50, 200, or 500 concurrent GET requests</strong> and watch DDN INFINIA hold flat
             latency in real time while S3 visibly degrades under increasing load. Every number on this
             page is <strong>measured, not modelled</strong>. The three cards below take those live
-            read-latency results and extrapolate them to hyperscaler volumes — so when xAI, Grok, or
-            your enterprise AI team asks <em>"what does this mean at our scale?"</em> every answer
-            is backed by data you just ran yourself.
+            read-latency results and extrapolate them to hyperscaler volumes — so when any
+            hyperscaler or enterprise AI team asks <em>"what does this mean at our scale?"</em> every
+            answer is backed by data you just ran yourself.
           </p>
         </div>
 
@@ -197,7 +197,7 @@ function GtcOutcomesSection() {
               <span className="text-neutral-400 font-normal">Micro-benchmark of a full production RAG pipeline</span>
             </div>
             <div className="px-5 py-4 border-r border-neutral-200">
-              <strong className="text-neutral-800">150× faster retrieval</strong> (6.5ms vs 988ms) at 50 concurrent users. Flat DDN latency = predictable SLAs at any scale including xAI-level traffic spikes.
+              <strong className="text-neutral-800">150× faster retrieval</strong> (6.5ms vs 988ms) at 50 concurrent users. Flat DDN latency = predictable SLAs at any scale including hyperscaler-level traffic spikes.
             </div>
             <div className="px-5 py-4 border-r border-neutral-200">
               <strong className="text-neutral-800">$52M/yr</strong> in H100 GPU time recovered at 100M queries/day. Eliminates S3 egress fees ($1.6M–$6.5M/yr). Defers GPU cluster expansion.
