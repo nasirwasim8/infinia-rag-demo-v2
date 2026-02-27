@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Upload, FileText, Trash2, Loader2, CheckCircle, Zap, Play, BarChart3, Info, TrendingUp } from 'lucide-react'
@@ -79,6 +79,119 @@ function ScalingChart({ scalePoints, ddnLatencies, awsLatencies, awsSimulated }:
   )
 }
 
+// ── Live Ingestion Dashboard Panel ───────────────────────────────────────────
+interface IngestionProgress {
+  chunks_done: number
+  chunks_total: number
+  pct: number
+  embeddings_per_sec: number
+  embedding_device: string
+  providers: Record<string, { latency_ms: number; success: boolean }>
+  done?: boolean
+}
+
+function IngestionPanel({ progress }: { progress: IngestionProgress }) {
+  const isGpu = progress.embedding_device === 'cuda'
+  const ddn = progress.providers?.ddn_infinia
+  const s3 = progress.providers?.aws
+  const barW = Math.min(progress.pct, 100)
+  return (
+    <div className="card p-5 space-y-4 border-l-4 border-ddn-red">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {/* SVG database icon */}
+          <svg className="w-4 h-4 text-ddn-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <ellipse cx="12" cy="5" rx="9" ry="3" />
+            <path d="M3 5v6a9 3 0 0 0 18 0V5" />
+            <path d="M3 11v6a9 3 0 0 0 18 0v-6" />
+          </svg>
+          <span className="text-sm font-semibold text-neutral-800">Live Ingestion Monitor</span>
+        </div>
+        {!progress.done && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-ddn-red animate-pulse" />
+            <span className="text-xs text-ddn-red font-medium">Processing</span>
+          </div>
+        )}
+        {progress.done && (
+          <div className="flex items-center gap-1.5">
+            <CheckCircle className="w-4 h-4 text-status-success" />
+            <span className="text-xs text-status-success font-medium">Complete</span>
+          </div>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      <div>
+        <div className="flex justify-between text-xs text-neutral-500 mb-1">
+          <span>Chunks processed</span>
+          <span className="font-mono">{progress.chunks_done} / {progress.chunks_total || '?'}</span>
+        </div>
+        <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-ddn-red rounded-full transition-all duration-300"
+            style={{ width: `${barW}%` }}
+          />
+        </div>
+        <div className="text-right text-xs text-neutral-400 mt-0.5 font-mono">{progress.pct.toFixed(1)}%</div>
+      </div>
+
+      {/* Metrics grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {/* Embeddings/sec */}
+        <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
+          <div className="flex items-center gap-1 mb-1 text-xs text-neutral-500">
+            {/* SVG CPU/GPU chip */}
+            <svg className={`w-3 h-3 ${isGpu ? 'text-violet-500' : 'text-neutral-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <rect x="4" y="4" width="16" height="16" rx="2" />
+              <rect x="9" y="9" width="6" height="6" />
+              <line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" />
+              <line x1="9" y1="20" x2="9" y2="23" /><line x1="15" y1="20" x2="15" y2="23" />
+              <line x1="20" y1="9" x2="23" y2="9" /><line x1="20" y1="14" x2="23" y2="14" />
+              <line x1="1" y1="9" x2="4" y2="9" /><line x1="1" y1="14" x2="4" y2="14" />
+            </svg>
+            <span>Embeddings/sec</span>
+          </div>
+          <div className={`text-lg font-bold font-mono ${isGpu ? 'text-violet-600' : 'text-neutral-700'}`}>
+            {Math.round(progress.embeddings_per_sec).toLocaleString()}
+          </div>
+          <div className="text-xs text-neutral-400">{isGpu ? 'GPU — CUDA' : 'CPU'}</div>
+        </div>
+
+        {/* DDN writes */}
+        <div className="bg-red-50 rounded-xl p-3 border border-red-100">
+          <div className="flex items-center gap-1 mb-1 text-xs text-neutral-500">
+            <svg className="w-3 h-3 text-ddn-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <ellipse cx="12" cy="5" rx="9" ry="3" />
+              <path d="M3 5v6a9 3 0 0 0 18 0V5" />
+              <path d="M3 11v6a9 3 0 0 0 18 0v-6" />
+            </svg>
+            <span>DDN writes</span>
+          </div>
+          <div className="text-lg font-bold font-mono text-ddn-red">
+            {ddn ? `${ddn.latency_ms.toFixed(0)}ms` : '—'}
+          </div>
+          <div className="text-xs text-emerald-600">avg latency</div>
+        </div>
+
+        {/* S3 writes */}
+        <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+          <div className="flex items-center gap-1 mb-1 text-xs text-neutral-500">
+            <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+            </svg>
+            <span>S3 writes</span>
+          </div>
+          <div className="text-lg font-bold font-mono text-slate-500">
+            {s3 ? `${s3.latency_ms.toFixed(0)}ms` : (ddn ? `${(ddn.latency_ms * 28).toFixed(0)}ms*` : '—')}
+          </div>
+          <div className="text-xs text-amber-500">{s3 ? 'avg latency' : 'est. (simulated)'}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function DocumentsPage() {
   const queryClient = useQueryClient()
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([])
@@ -90,6 +203,10 @@ export default function DocumentsPage() {
     scale_points: number[]; ddn_latencies: number[]; aws_latencies: number[]; aws_simulated: boolean
   } | null>(null)
   const [scaleMode, setScaleMode] = useState<50 | 200 | 500>(50)
+
+  // ── Live ingestion progress state ──────────────────────────────────────────
+  const [ingestionProgress, setIngestionProgress] = useState<IngestionProgress | null>(null)
+  const progressAbortRef = useRef<AbortController | null>(null)
 
   const { data: docCount } = useQuery({
     queryKey: ['documentCount'],
@@ -103,10 +220,73 @@ export default function DocumentsPage() {
 
   const uploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
-      if (clearBeforeProcess) {
-        await clearDocuments()
+      if (clearBeforeProcess) await clearDocuments()
+
+      // Use tracked upload for first file to show live progress
+      // then fall back to multi-upload for remaining files
+      if (files.length === 0) return { data: { results: [] } }
+
+      // Start tracked upload to get an upload_id
+      const formData = new FormData()
+      formData.append('file', files[0])
+      const trackedRes = await fetch('/api/documents/upload-tracked', {
+        method: 'POST',
+        body: formData,
+      })
+      const { upload_id } = await trackedRes.json()
+
+      // Open SSE progress stream
+      if (progressAbortRef.current) progressAbortRef.current.abort()
+      const ctrl = new AbortController()
+      progressAbortRef.current = ctrl
+      setIngestionProgress({ chunks_done: 0, chunks_total: 0, pct: 0, embeddings_per_sec: 0, embedding_device: 'cpu', providers: {} })
+
+        // Non-blocking SSE listener
+        ; (async () => {
+          try {
+            const res = await fetch(`/api/documents/upload-progress/${upload_id}`, { signal: ctrl.signal })
+            if (!res.ok || !res.body) return
+            const reader = res.body.getReader()
+            const dec = new TextDecoder()
+            let buf = ''
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) break
+              buf += dec.decode(value, { stream: true })
+              const parts = buf.split('\n\n')
+              buf = parts.pop() ?? ''
+              for (const part of parts) {
+                const lines = part.trim().split('\n')
+                let etype = 'progress'
+                let dstr = ''
+                for (const ln of lines) {
+                  if (ln.startsWith('event:')) etype = ln.slice(6).trim()
+                  else if (ln.startsWith('data:')) dstr = ln.slice(5).trim()
+                }
+                if (!dstr) continue
+                try {
+                  const payload = JSON.parse(dstr)
+                  if (etype === 'progress') {
+                    setIngestionProgress(payload)
+                  } else if (etype === 'done') {
+                    setIngestionProgress({ ...payload, done: true })
+                    queryClient.invalidateQueries({ queryKey: ['documentCount'] })
+                    queryClient.invalidateQueries({ queryKey: ['health'] })
+                  }
+                } catch { /* ignore */ }
+              }
+            }
+          } catch (e: unknown) {
+            if (e instanceof Error && e.name !== 'AbortError') console.warn('SSE error', e)
+          }
+        })()
+
+      // If more than 1 file, also upload remaining via regular multi-upload
+      const remaining = files.slice(1)
+      if (remaining.length > 0) {
+        return uploadMultipleDocuments(remaining)
       }
-      return uploadMultipleDocuments(files)
+      return { data: { results: [{ filename: files[0].name, success: true, chunks: 0, aws_simulated: false }] } }
     },
     onSuccess: (res) => {
       const successful = res.data.results.filter((r: any) => r.success)
@@ -351,6 +531,11 @@ across all chunk sizes.
           </>
         )}
       </div>
+
+      {/* Live Ingestion Dashboard */}
+      {ingestionProgress && (
+        <IngestionPanel progress={ingestionProgress} />
+      )}
 
       {/* Options */}
       <div className="toolbar">

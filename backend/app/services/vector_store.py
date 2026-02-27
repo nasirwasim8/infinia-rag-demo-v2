@@ -70,13 +70,20 @@ class VectorStore:
         """Encode texts to embeddings."""
         return self.embedding_model.encode(texts, convert_to_numpy=True, show_progress_bar=False)
 
-    def add_chunks(self, chunks: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Add chunks to vector store and object storage."""
+    def add_chunks(self, chunks: List[Dict[str, Any]], progress_callback=None) -> Dict[str, Any]:
+        """Add chunks to vector store and object storage.
+        
+        Args:
+            chunks: List of chunk dicts with 'content' and optional 'chunk_id' / 'metadata'.
+            progress_callback: Optional callable(chunks_done, chunks_total, embeddings_per_sec,
+                               provider_write_stats) called after each chunk is stored.
+        """
         logger.info(f"📥 Adding {len(chunks)} chunks to vector store")
         logger.info(f"   Current index size BEFORE: {self.index.ntotal} chunks")
         
+        total = len(chunks)
         results = {
-            'total_chunks': len(chunks),
+            'total_chunks': total,
             'stored_chunks': 0,
             'provider_performance': {p: {'times': [], 'success': 0, 'failed': 0} for p in self.providers},
             'embedding_time_ms': 0.0,
@@ -99,9 +106,11 @@ class VectorStore:
         except Exception as e:
             logger.error(f"❌ Embedding generation failed: {e}")
             raise
-        results['embedding_time_ms'] = (time.perf_counter() - _embed_start) * 1000
+        embed_elapsed = (time.perf_counter() - _embed_start) * 1000
+        results['embedding_time_ms'] = embed_elapsed
+        embeddings_per_sec = (total / embed_elapsed * 1000) if embed_elapsed > 0 else 0
         logger.info(f"   Embeddings shape: {embeddings.shape}")
-        logger.info(f"✅ Embeddings generated in {results['embedding_time_ms']:.1f}ms on {self.device}")
+        logger.info(f"✅ Embeddings generated in {embed_elapsed:.1f}ms on {self.device}")
 
         # Process each chunk with its pre-computed embedding
         for i, chunk in enumerate(chunks):
@@ -133,6 +142,24 @@ class VectorStore:
                     results['provider_performance'][provider]['failed'] += 1
 
             results['stored_chunks'] += 1
+
+            # Fire progress callback after each chunk
+            if progress_callback:
+                try:
+                    provider_write_stats = {}
+                    for p, r in storage_results.items():
+                        provider_write_stats[p] = {
+                            'latency_ms': r['time'] * 1000,
+                            'success': r['success']
+                        }
+                    progress_callback(
+                        chunks_done=i + 1,
+                        chunks_total=total,
+                        embeddings_per_sec=embeddings_per_sec,
+                        provider_write_stats=provider_write_stats
+                    )
+                except Exception:
+                    pass  # Never let progress callback crash the main operation
 
         # Calculate average times for each provider
         for provider in self.providers:

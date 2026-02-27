@@ -250,6 +250,137 @@ async def get_document_count():
     return {"total_chunks": vector_store.total_chunks}
 
 
+# ── Tracked upload progress state ────────────────────────────────────────────
+# Key: upload_id (str), Value: progress dict updated by background thread
+_upload_progress: dict = {}
+
+
+@documents_router.post("/upload-tracked")
+async def upload_document_tracked(file: UploadFile = File(...)):
+    """
+    Upload a document and return an upload_id.
+    The client can then poll GET /documents/upload-progress/{upload_id} via SSE
+    to watch real-time ingestion metrics.
+    """
+    import uuid
+    upload_id = str(uuid.uuid4())
+    logger.info(f"📄 Tracked upload request: {file.filename}, id={upload_id}")
+
+    if not document_processor.is_supported(file.filename):
+        raise HTTPException(status_code=400, detail=f"Unsupported file type")
+
+    content = await file.read()
+
+    # Save temp file synchronously
+    import tempfile
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    filename = file.filename
+
+    # Initialise progress record
+    _upload_progress[upload_id] = {
+        "status": "processing",
+        "filename": filename,
+        "chunks_done": 0,
+        "chunks_total": 0,
+        "embeddings_per_sec": 0.0,
+        "providers": {},
+        "embedding_device": vector_store.device,
+        "result": None,
+        "error": None,
+    }
+
+    def _background_upload():
+        try:
+            chunks = document_processor.process_file(tmp_path)
+            _upload_progress[upload_id]["chunks_total"] = len(chunks)
+
+            def _cb(chunks_done, chunks_total, embeddings_per_sec, provider_write_stats):
+                _upload_progress[upload_id].update({
+                    "chunks_done": chunks_done,
+                    "chunks_total": chunks_total,
+                    "embeddings_per_sec": round(embeddings_per_sec, 1),
+                    "providers": provider_write_stats,
+                })
+
+            results = vector_store.add_chunks(chunks, progress_callback=_cb)
+            ttfb_monitor.add_storage_comparison(results['provider_performance'], 'document_upload')
+            _upload_progress[upload_id].update({"status": "done", "result": results})
+        except Exception as exc:
+            _upload_progress[upload_id].update({"status": "error", "error": str(exc)})
+        finally:
+            os.unlink(tmp_path)
+
+    import threading
+    threading.Thread(target=_background_upload, daemon=True).start()
+
+    return {"upload_id": upload_id, "filename": filename}
+
+
+@documents_router.get("/upload-progress/{upload_id}")
+async def stream_upload_progress(upload_id: str):
+    """
+    SSE stream of real-time ingestion metrics for a tracked upload.
+
+    Event types:
+      progress  → {chunks_done, chunks_total, pct, embeddings_per_sec, embedding_device, providers}
+      done      → same as progress + {result}
+      error     → {message}
+    """
+    async def _gen():
+        import json as _json
+        poll_interval = 0.25  # seconds
+        max_wait = 600  # 10 min timeout
+        elapsed = 0.0
+
+        while elapsed < max_wait:
+            prog = _upload_progress.get(upload_id)
+            if prog is None:
+                yield 'event: error\ndata: {"message": "Unknown upload_id"}\n\n'
+                return
+
+            pct = 0
+            total = prog["chunks_total"]
+            done = prog["chunks_done"]
+            if total > 0:
+                pct = round(done / total * 100, 1)
+
+            payload = {
+                "chunks_done": done,
+                "chunks_total": total,
+                "pct": pct,
+                "embeddings_per_sec": prog["embeddings_per_sec"],
+                "embedding_device": prog["embedding_device"],
+                "providers": prog["providers"],
+            }
+
+            if prog["status"] == "done":
+                result = prog.get("result", {})
+                payload["embedding_time_ms"] = result.get("embedding_time_ms", 0)
+                yield f'event: done\ndata: {_json.dumps(payload)}\n\n'
+                # Clean up
+                _upload_progress.pop(upload_id, None)
+                return
+            elif prog["status"] == "error":
+                yield f'event: error\ndata: {{"message": "{prog.get("error", "Unknown error")}"}}\n\n'
+                _upload_progress.pop(upload_id, None)
+                return
+            else:
+                yield f'event: progress\ndata: {_json.dumps(payload)}\n\n'
+
+            await asyncio.sleep(poll_interval)
+            elapsed += poll_interval
+
+        yield 'event: error\ndata: {"message": "Timeout waiting for upload"}\n\n'
+
+    return StreamingResponse(
+        _gen(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+    )
+
 # ============== RAG Routes ==============
 
 @rag_router.post("/query", response_model=QueryResponse)
@@ -422,6 +553,99 @@ async def get_available_models():
     """Get list of available LLM models."""
     return {"models": nvidia_llm.available_models()}
 
+
+@rag_router.get("/stream")
+async def stream_rag_response(query: str, model: str = "nvidia/nvidia-nemotron-nano-9b-v2", top_k: int = 5):
+    """
+    Stream RAG response token-by-token via SSE.
+
+    SSE event types:
+      start  → {"ttfb_ms": float, "aws_ttfb_ms": float, "chunks_found": int}
+      token  → {"t": "<token_text>"}
+      done   → {"total_tokens": int, "elapsed_ms": float, "tps": float}
+      error  → {"message": str}
+    """
+    async def _generate():
+        import queue as _queue
+        import threading
+
+        try:
+            # 1. Vector search (blocking → run in executor)
+            loop = asyncio.get_event_loop()
+            search_results = await loop.run_in_executor(
+                None, vector_store.search_with_provider_comparison, query, top_k
+            )
+
+            if not search_results["results"]:
+                yield 'event: error\ndata: {"message": "No documents found. Please upload documents first."}\n\n'
+                return
+
+            # 2. Emit start event with storage TTFB data
+            ddn_ttfb = search_results.get("storage_ttfb", {}).get("ddn_infinia", 0)
+            aws_ttfb = search_results.get("storage_ttfb", {}).get("aws", 0)
+            chunks_found = len(search_results["results"])
+            yield f'event: start\ndata: {{"ttfb_ms": {ddn_ttfb:.1f}, "aws_ttfb_ms": {aws_ttfb:.1f}, "chunks_found": {chunks_found}}}\n\n'
+
+            # 3. Build context
+            documents = [r["content"] for r in search_results["results"]]
+            context = "\n\n---\n\n".join(documents[:top_k])
+            messages = [
+                {"role": "system", "content": "You are a helpful assistant. Answer questions based on the provided context. If the context doesn't contain relevant information, say so."},
+                {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"}
+            ]
+
+            # 4. Stream tokens via background thread → asyncio queue
+            llm_start = time.perf_counter()
+            token_count = 0
+            token_queue: "_queue.Queue[str | None]" = _queue.Queue()
+
+            def _stream_worker():
+                try:
+                    for tok in nvidia_llm.chat_completion_stream(messages, model=model):
+                        token_queue.put(tok)
+                except Exception as exc:
+                    token_queue.put(f"__ERROR__:{exc}")
+                finally:
+                    token_queue.put(None)  # sentinel
+
+            thread = threading.Thread(target=_stream_worker, daemon=True)
+            thread.start()
+
+            while True:
+                try:
+                    token = token_queue.get(timeout=0.05)
+                except _queue.Empty:
+                    await asyncio.sleep(0)
+                    continue
+
+                if token is None:
+                    break
+                if isinstance(token, str) and token.startswith("__ERROR__:"):
+                    err_msg = token[len("__ERROR__:"):].replace('"', "'")
+                    yield f'event: error\ndata: {{"message": "{err_msg}"}}\n\n'
+                    return
+
+                token_count += 1
+                safe = token.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("\r", "")
+                yield f'event: token\ndata: {{"t": "{safe}"}}\n\n'
+
+            thread.join(timeout=2)
+
+            # 5. Done event
+            elapsed_ms = (time.perf_counter() - llm_start) * 1000
+            tps = (token_count / elapsed_ms * 1000) if elapsed_ms > 0 else 0
+            yield f'event: done\ndata: {{"total_tokens": {token_count}, "elapsed_ms": {elapsed_ms:.1f}, "tps": {tps:.1f}}}\n\n'
+
+        except Exception as exc:
+            logger.error(f"SSE stream error: {exc}", exc_info=True)
+            err = str(exc).replace('"', "'")
+            yield f'event: error\ndata: {{"message": "{err}"}}\n\n'
+
+    return StreamingResponse(
+        _generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+    )
 
 # ============== Metrics Routes ==============
 

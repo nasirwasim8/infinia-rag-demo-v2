@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useState, useEffect, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Send, Loader2, Zap, Shield, ChevronDown, Clock, Trash2, Info } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { queryRAG, getAvailableModels, getHealth, QueryResponse } from '../services/api'
+import { api, getAvailableModels, getHealth, QueryResponse } from '../services/api'
 import toast from 'react-hot-toast'
 
 // Persist state to localStorage
@@ -34,6 +34,17 @@ export default function ChatPage() {
   // Track if data was loaded from localStorage
   const [hasLoadedHistory, setHasLoadedHistory] = useState(false)
   const [hasLoadedResponse, setHasLoadedResponse] = useState(false)
+
+  // ── Streaming state ─────────────────────────────────────────────────────────
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [streamingText, setStreamingText] = useState('')
+  const [ttftMs, setTtftMs] = useState<number | null>(null)
+  const [tpsValue, setTpsValue] = useState<number | null>(null)
+  const [streamDdnTtfb, setStreamDdnTtfb] = useState<number | null>(null)
+  const [streamAwsTtfb, setStreamAwsTtfb] = useState<number | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+  const queryStartRef = useRef<number>(0)
+  const firstTokenRef = useRef<boolean>(false)
 
   // Persist state changes
   useEffect(() => {
@@ -118,34 +129,81 @@ export default function ChatPage() {
     queryFn: () => getHealth().then((res) => res.data),
   })
 
-  const queryMutation = useMutation({
-    mutationFn: () =>
-      queryRAG({
-        query,
-        model: selectedModel,
-        top_k: 5,
-        use_reranking: useReranking,
-        use_guardrails: useGuardrails,
-      }),
-    onSuccess: (res) => {
-      const newResponse = res.data
-      setResponse(newResponse)
-
-      // Add to chat history (keep last 5)
-      const newEntry: ChatHistoryEntry = {
-        query: query,
-        response: newResponse,
-        timestamp: new Date().toISOString()
-      }
-      setChatHistory(prev => [newEntry, ...prev].slice(0, 5))
-    },
-  })
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (query.trim()) {
-      queryMutation.mutate()
-    }
+    if (!query.trim() || isStreaming) return
+
+    // Cancel any in-flight stream
+    if (abortRef.current) abortRef.current.abort()
+
+    // Reset streaming state
+    setIsStreaming(true)
+    setStreamingText('')
+    setTtftMs(null)
+    setTpsValue(null)
+    setStreamDdnTtfb(null)
+    setStreamAwsTtfb(null)
+    setResponse(null)
+    queryStartRef.current = Date.now()
+    firstTokenRef.current = false
+
+    abortRef.current = api.streamRAGQuery(
+      query,
+      selectedModel,
+      5,
+      // onStart — storage TTFB data arrives
+      (ttfbMs, awsTtfbMs) => {
+        setStreamDdnTtfb(ttfbMs)
+        setStreamAwsTtfb(awsTtfbMs)
+      },
+      // onToken — each token
+      (token) => {
+        if (!firstTokenRef.current) {
+          firstTokenRef.current = true
+          setTtftMs(Date.now() - queryStartRef.current)
+        }
+        setStreamingText(prev => prev + token)
+      },
+      // onDone
+      (_totalTokens, elapsedMs, tps) => {
+        setTpsValue(tps)
+        setIsStreaming(false)
+        // Build a synthetic QueryResponse so existing PerformanceComparison works
+        const syntheticResponse: QueryResponse = {
+          success: true,
+          query,
+          response: '',   // filled from streamingText in render
+          model_used: selectedModel,
+          retrieved_chunks: [],
+          storage_ttfb: {
+            ddn_infinia: streamDdnTtfb ?? 0,
+            aws: streamAwsTtfb ?? 0,
+          },
+          total_query_time: {
+            ddn_infinia: (streamDdnTtfb ?? 0) + elapsedMs,
+            aws: (streamAwsTtfb ?? 0) + elapsedMs,
+          },
+          provider_times: {},
+          fastest_provider: 'ddn_infinia',
+          ttfb_improvement: {},
+          total_time_ms: Date.now() - queryStartRef.current,
+        }
+        setResponse(syntheticResponse)
+        const newEntry: ChatHistoryEntry = {
+          query,
+          response: syntheticResponse,
+          timestamp: new Date().toISOString()
+        }
+        setChatHistory(prev => [newEntry, ...prev].slice(0, 5))
+        // Persist
+        localStorage.setItem('rag_chat_response', JSON.stringify(syntheticResponse))
+      },
+      // onError
+      (message) => {
+        setIsStreaming(false)
+        toast.error(message)
+      },
+    )
   }
 
   return (
@@ -177,13 +235,13 @@ export default function ChatPage() {
             />
             <button
               type="submit"
-              disabled={queryMutation.isPending || !query.trim()}
+              disabled={isStreaming || !query.trim()}
               className="absolute right-3 bottom-3 w-10 h-10 flex items-center justify-center bg-ddn-red text-white rounded-xl hover:bg-ddn-red-hover disabled:opacity-40 disabled:cursor-not-allowed"
               style={{
                 transition: 'all 150ms cubic-bezier(0.16, 1, 0.3, 1)',
               }}
             >
-              {queryMutation.isPending ? (
+              {isStreaming ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <Send className="w-5 h-5" />
@@ -245,10 +303,10 @@ export default function ChatPage() {
 
               <button
                 type="submit"
-                disabled={queryMutation.isPending || !query.trim()}
+                disabled={isStreaming || !query.trim()}
                 className="btn-primary"
               >
-                Get Answer
+                {isStreaming ? 'Generating…' : 'Get Answer'}
               </button>
             </div>
           </div>
@@ -305,9 +363,61 @@ export default function ChatPage() {
         </div>
       )}
 
+      {/* ── Streaming Response (live) ── */}
+      {isStreaming && streamingText && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          {/* Live TTFB banner once first token arrived */}
+          {streamDdnTtfb !== null && (
+            <div className="status-banner-ddn p-4">
+              <div className="flex items-center gap-6">
+                <div>
+                  <div className="text-xs opacity-70 uppercase tracking-wide mb-1">Retrieval TTFB</div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xl font-bold">{streamDdnTtfb.toFixed(0)}ms</span>
+                    <span className="opacity-60 text-sm">DDN INFINIA</span>
+                    <span className="text-lg opacity-40">vs</span>
+                    <span className="text-lg opacity-60">{streamAwsTtfb?.toFixed(0) ?? '—'}ms</span>
+                    <span className="opacity-50 text-sm">AWS S3</span>
+                  </div>
+                </div>
+                {ttftMs !== null && (
+                  <div className="ml-auto flex items-center gap-2 bg-white/20 backdrop-blur rounded-xl px-3 py-2">
+                    {/* SVG clock icon */}
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span className="text-sm font-semibold">First token: {ttftMs}ms</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Streaming text card */}
+          <div className="card-elevated p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Generating Response</h3>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 bg-ddn-red rounded-full animate-pulse" />
+                <span className="text-xs text-ddn-red font-medium">Streaming</span>
+              </div>
+            </div>
+            <p className="text-neutral-800 whitespace-pre-wrap leading-relaxed text-[15px]">
+              {streamingText}
+              <span className="inline-block w-0.5 h-4 bg-ddn-red ml-0.5 animate-pulse" />
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* Response */}
       <AnimatePresence>
-        {response && (
+        {response && !isStreaming && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -329,8 +439,33 @@ export default function ChatPage() {
             <div className="card-elevated p-6">
               <h3 className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-4">Response</h3>
               <div className="prose prose-neutral prose-sm max-w-none">
-                <p className="text-neutral-800 whitespace-pre-wrap leading-relaxed text-[15px]">{response.response}</p>
+                <p className="text-neutral-800 whitespace-pre-wrap leading-relaxed text-[15px]">{streamingText || response.response}</p>
               </div>
+
+              {/* ── TPS + TTFT badges ── */}
+              {(tpsValue !== null || ttftMs !== null) && (
+                <div className="flex flex-wrap gap-3 mt-5 pt-4 border-t border-neutral-100">
+                  {tpsValue !== null && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-50 border border-red-100">
+                      {/* SVG lightning bolt */}
+                      <svg className="w-3.5 h-3.5 text-ddn-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                      </svg>
+                      <span className="text-sm font-bold text-ddn-red font-mono">{tpsValue.toFixed(0)} tok/sec</span>
+                    </div>
+                  )}
+                  {ttftMs !== null && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-100">
+                      {/* SVG clock */}
+                      <svg className="w-3.5 h-3.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      <span className="text-sm font-semibold text-blue-700 font-mono">First token: {ttftMs}ms</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Retrieved chunks */}
@@ -384,7 +519,7 @@ export default function ChatPage() {
       </AnimatePresence>
 
       {/* Initial state message */}
-      {!response && !queryMutation.isPending && (
+      {!response && !isStreaming && !streamingText && (
         <div className="card-inset p-8 text-center">
           <div className="w-12 h-12 rounded-2xl bg-neutral-200/50 flex items-center justify-center mx-auto mb-4">
             <Send className="w-5 h-5 text-neutral-400" />

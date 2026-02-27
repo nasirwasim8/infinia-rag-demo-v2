@@ -309,6 +309,63 @@ export const api = {
     const response = await axiosInstance.post('/benchmarks/scaling', { max_concurrency: maxConcurrency })
     return response.data
   },
+
+  // ── Streaming RAG (SSE) ──────────────────────────────────────────────────────
+  streamRAGQuery: (
+    query: string,
+    model: string,
+    topK: number,
+    onStart: (ttfbMs: number, awsTtfbMs: number, chunksFound: number) => void,
+    onToken: (token: string) => void,
+    onDone: (totalTokens: number, elapsedMs: number, tps: number) => void,
+    onError: (message: string) => void,
+  ): AbortController => {
+    const ctrl = new AbortController()
+    const params = new URLSearchParams({ query, model, top_k: String(topK) })
+    const url = `/api/rag/stream?${params.toString()}`
+
+      ; (async () => {
+        try {
+          const res = await fetch(url, { signal: ctrl.signal })
+          if (!res.ok || !res.body) {
+            onError(`HTTP ${res.status}`)
+            return
+          }
+          const reader = res.body.getReader()
+          const dec = new TextDecoder()
+          let buf = ''
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buf += dec.decode(value, { stream: true })
+            // Parse SSE lines
+            const parts = buf.split('\n\n')
+            buf = parts.pop() ?? ''
+            for (const part of parts) {
+              const lines = part.trim().split('\n')
+              let eventType = 'message'
+              let dataStr = ''
+              for (const line of lines) {
+                if (line.startsWith('event:')) eventType = line.slice(6).trim()
+                else if (line.startsWith('data:')) dataStr = line.slice(5).trim()
+              }
+              if (!dataStr) continue
+              try {
+                const payload = JSON.parse(dataStr)
+                if (eventType === 'start') onStart(payload.ttfb_ms, payload.aws_ttfb_ms, payload.chunks_found)
+                else if (eventType === 'token') onToken(payload.t)
+                else if (eventType === 'done') onDone(payload.total_tokens, payload.elapsed_ms, payload.tps)
+                else if (eventType === 'error') onError(payload.message)
+              } catch { /* ignore malformed */ }
+            }
+          }
+        } catch (e: unknown) {
+          if (e instanceof Error && e.name !== 'AbortError') onError(String(e))
+        }
+      })()
+
+    return ctrl
+  },
 }
 
 // Legacy exports for backward compatibility

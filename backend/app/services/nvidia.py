@@ -4,8 +4,9 @@ Supports LLM, Reranking, and Guardrails with automatic cloud→local fallback.
 """
 import requests
 import time
+import json
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Generator
 
 from app.core.config import settings
 
@@ -148,6 +149,78 @@ class HybridLLMClient:
             logger.error(f"Local LLM error: {e}")
             raise Exception(f"Both cloud and local LLM failed. Error: {e}")
     
+    def chat_completion_stream(
+        self,
+        messages: List[Dict[str, str]],
+        model: str = None,
+        max_tokens: int = 1000,
+        temperature: float = 0.7,
+    ) -> Generator[str, None, None]:
+        """
+        Stream chat completion tokens one-by-one.
+        Yields individual token strings.
+        Falls back to word simulation when local LLM is used.
+        """
+        # Local / offline mode: get full response then emit word by word
+        if settings.offline_mode or (not self.api_key):
+            try:
+                full = self._local_chat_completion(messages, max_tokens, temperature)
+                text = full["choices"][0]["message"]["content"]
+                words = text.split(" ")
+                for i, word in enumerate(words):
+                    yield word + ("" if i == len(words) - 1 else " ")
+                    time.sleep(0.02)  # simulate ~50 tok/sec
+            except Exception as e:
+                logger.error(f"Local LLM stream error: {e}")
+                yield f"[Error: {e}]"
+            return
+
+        # Cloud NVIDIA streaming
+        model_name = model or self.default_model
+        url = f"{self.base_url}/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "Accept": "text/event-stream",
+        }
+        payload = {
+            "model": model_name,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": True,
+        }
+        try:
+            with requests.post(url, headers=headers, json=payload, stream=True, timeout=120) as resp:
+                resp.raise_for_status()
+                for raw_line in resp.iter_lines():
+                    if not raw_line:
+                        continue
+                    line = raw_line.decode("utf-8") if isinstance(raw_line, bytes) else raw_line
+                    if line.startswith("data:"):
+                        data_str = line[5:].strip()
+                        if data_str == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(data_str)
+                            delta = chunk.get("choices", [{}])[0].get("delta", {})
+                            token = delta.get("content", "")
+                            if token:
+                                yield token
+                        except json.JSONDecodeError:
+                            continue
+        except Exception as e:
+            logger.error(f"Streaming error: {e}")
+            # Fallback: non-streaming full response emitted word-by-word
+            try:
+                full = self._cloud_chat_completion(messages, model, max_tokens, temperature, stream=False)
+                text = full["choices"][0]["message"]["content"]
+                words = text.split(" ")
+                for i, word in enumerate(words):
+                    yield word + ("" if i == len(words) - 1 else " ")
+            except Exception as e2:
+                yield f"[Error: {e2}]"
+
     def available_models(self) -> List[str]:
         """Get list of available models."""
         models = [
