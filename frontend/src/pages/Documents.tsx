@@ -737,6 +737,60 @@ across all chunk sizes.
           <p className="text-xs text-neutral-500 mb-4">
             GET latency at increasing concurrent request load — DDN INFINIA stays flat, S3 degrades
           </p>
+
+          {/* ── Chunk Context Strip ─────────────────────────────────────────────── */}
+          {(docCount?.total_chunks ?? 0) > 0 && (() => {
+            const chunks = docCount!.total_chunks
+            const maxConcurrent = scalingData.scale_points[scalingData.scale_points.length - 1] ?? 50
+            const totalReads = chunks * maxConcurrent
+            return (
+              <div className="flex flex-wrap items-center gap-3 mb-4 px-4 py-3 rounded-xl bg-gradient-to-r from-red-50 to-slate-50 border-l-4 border-ddn-red">
+                {/* Chunks per provider */}
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-ddn-red flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <ellipse cx="12" cy="5" rx="9" ry="3" />
+                    <path d="M3 5v6a9 3 0 0 0 18 0V5" />
+                    <path d="M3 11v6a9 3 0 0 0 18 0v-6" />
+                  </svg>
+                  <span className="text-sm">
+                    <span className="font-bold text-ddn-red text-base tabular-nums">{chunks.toLocaleString()}</span>
+                    <span className="text-neutral-500 ml-1">chunks replicated on</span>
+                    <span className="font-semibold text-neutral-700 ml-1">DDN &amp; S3</span>
+                  </span>
+                </div>
+
+                <span className="text-neutral-300 hidden sm:inline">·</span>
+
+                {/* Concurrent readers */}
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-slate-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M6 20v-2a6 6 0 0 1 12 0v2" />
+                    <circle cx="20" cy="8" r="3" /><path d="M22 20v-1a5 5 0 0 0-4-4.9" />
+                    <circle cx="4" cy="8" r="3" /><path d="M2 20v-1a5 5 0 0 1 4-4.9" />
+                  </svg>
+                  <span className="text-sm">
+                    <span className="font-bold text-slate-700 text-base tabular-nums">{maxConcurrent}</span>
+                    <span className="text-neutral-500 ml-1">concurrent readers</span>
+                  </span>
+                </div>
+
+                <span className="text-neutral-300 hidden sm:inline">·</span>
+
+                {/* Total object retrievals */}
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-violet-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                  </svg>
+                  <span className="text-sm">
+                    <span className="font-bold text-violet-600 text-base tabular-nums">{totalReads.toLocaleString()}</span>
+                    <span className="text-neutral-500 ml-1">total object retrievals tested</span>
+                  </span>
+                </div>
+              </div>
+            )
+          })()}
+
           {scalingData.aws_simulated && (
             <div className="alert alert-info mb-4">
               <Info className="w-4 h-4" />
