@@ -315,7 +315,15 @@ export const api = {
     query: string,
     model: string,
     topK: number,
-    onStart: (ttfbMs: number, awsTtfbMs: number, chunksFound: number) => void,
+    onStart: (
+      ttfbMs: number,
+      awsTtfbMs: number,
+      chunksFound: number,
+      chunks: Array<{ content: string; distance: number; metadata: Record<string, unknown>; chunk_id: string }>,
+      providerTimes: Record<string, unknown>,
+      fastestProvider: string,
+      ttfbImprovement: Record<string, unknown>,
+    ) => void,
     onToken: (token: string) => void,
     onDone: (totalTokens: number, elapsedMs: number, tps: number) => void,
     onError: (message: string) => void,
@@ -352,7 +360,17 @@ export const api = {
               if (!dataStr) continue
               try {
                 const payload = JSON.parse(dataStr)
-                if (eventType === 'start') onStart(payload.ttfb_ms, payload.aws_ttfb_ms, payload.chunks_found)
+                if (eventType === 'start') {
+                  onStart(
+                    payload.ttfb_ms,
+                    payload.aws_ttfb_ms,
+                    payload.chunks_found,
+                    payload.chunks ?? [],
+                    payload.provider_times ?? {},
+                    payload.fastest_provider ?? 'ddn_infinia',
+                    payload.ttfb_improvement ?? {},
+                  )
+                }
                 else if (eventType === 'token') onToken(payload.t)
                 else if (eventType === 'done') onDone(payload.total_tokens, payload.elapsed_ms, payload.tps)
                 else if (eventType === 'error') onError(payload.message)

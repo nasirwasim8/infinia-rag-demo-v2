@@ -45,6 +45,13 @@ export default function ChatPage() {
   const abortRef = useRef<AbortController | null>(null)
   const queryStartRef = useRef<number>(0)
   const firstTokenRef = useRef<boolean>(false)
+  // Refs to avoid stale-closure problem in onDone callback:
+  const ddnTtfbRef = useRef<number>(0)
+  const awsTtfbRef = useRef<number>(0)
+  const chunksRef = useRef<QueryResponse['retrieved_chunks']>([])
+  const providerTimesRef = useRef<Record<string, unknown>>({})
+  const fastestProviderRef = useRef<string>('ddn_infinia')
+  const ttfbImprovementRef = useRef<Record<string, unknown>>({})
 
   // Persist state changes
   useEffect(() => {
@@ -151,10 +158,17 @@ export default function ChatPage() {
       query,
       selectedModel,
       5,
-      // onStart — storage TTFB data arrives
-      (ttfbMs, awsTtfbMs) => {
+      // onStart — storage TTFB + full chunk data arrives
+      (ttfbMs, awsTtfbMs, _chunksFound, chunks, providerTimes, fastestProvider, ttfbImprovement) => {
+        // Write to both state (display) and refs (closures read refs)
         setStreamDdnTtfb(ttfbMs)
         setStreamAwsTtfb(awsTtfbMs)
+        ddnTtfbRef.current = ttfbMs
+        awsTtfbRef.current = awsTtfbMs
+        chunksRef.current = chunks as QueryResponse['retrieved_chunks']
+        providerTimesRef.current = providerTimes
+        fastestProviderRef.current = fastestProvider
+        ttfbImprovementRef.current = ttfbImprovement
       },
       // onToken — each token
       (token) => {
@@ -164,28 +178,29 @@ export default function ChatPage() {
         }
         setStreamingText(prev => prev + token)
       },
-      // onDone
+      // onDone — read from refs (not state) to avoid stale closure
       (_totalTokens, elapsedMs, tps) => {
         setTpsValue(tps)
         setIsStreaming(false)
-        // Build a synthetic QueryResponse so existing PerformanceComparison works
+        const ddn = ddnTtfbRef.current
+        const aws = awsTtfbRef.current
         const syntheticResponse: QueryResponse = {
           success: true,
           query,
           response: '',   // filled from streamingText in render
           model_used: selectedModel,
-          retrieved_chunks: [],
+          retrieved_chunks: chunksRef.current,
           storage_ttfb: {
-            ddn_infinia: streamDdnTtfb ?? 0,
-            aws: streamAwsTtfb ?? 0,
+            ddn_infinia: ddn,
+            aws: aws,
           },
           total_query_time: {
-            ddn_infinia: (streamDdnTtfb ?? 0) + elapsedMs,
-            aws: (streamAwsTtfb ?? 0) + elapsedMs,
+            ddn_infinia: ddn + elapsedMs,
+            aws: aws + elapsedMs,
           },
-          provider_times: {},
-          fastest_provider: 'ddn_infinia',
-          ttfb_improvement: {},
+          provider_times: providerTimesRef.current,
+          fastest_provider: fastestProviderRef.current,
+          ttfb_improvement: ttfbImprovementRef.current,
           total_time_ms: Date.now() - queryStartRef.current,
         }
         setResponse(syntheticResponse)

@@ -580,11 +580,35 @@ async def stream_rag_response(query: str, model: str = "nvidia/nvidia-nemotron-n
                 yield 'event: error\ndata: {"message": "No documents found. Please upload documents first."}\n\n'
                 return
 
-            # 2. Emit start event with storage TTFB data
+            # 2. Emit start event with storage TTFB data + full chunk info
+            import json as _json
             ddn_ttfb = search_results.get("storage_ttfb", {}).get("ddn_infinia", 0)
             aws_ttfb = search_results.get("storage_ttfb", {}).get("aws", 0)
             chunks_found = len(search_results["results"])
-            yield f'event: start\ndata: {{"ttfb_ms": {ddn_ttfb:.1f}, "aws_ttfb_ms": {aws_ttfb:.1f}, "chunks_found": {chunks_found}}}\n\n'
+            # Include full chunk data so the frontend can render the similarity panel
+            chunk_list = [
+                {
+                    "content": r["content"],
+                    "distance": float(r["distance"]),
+                    "metadata": r.get("metadata", {}),
+                    "chunk_id": r.get("chunk_id", ""),
+                }
+                for r in search_results["results"]
+            ]
+            # Also include provider_times for the full performance comparison block
+            provider_times = search_results.get("provider_times", {})
+            fastest_provider = search_results.get("fastest_provider", "ddn_infinia")
+            ttfb_improvement = search_results.get("ttfb_improvement", {})
+            start_payload = {
+                "ttfb_ms": ddn_ttfb,
+                "aws_ttfb_ms": aws_ttfb,
+                "chunks_found": chunks_found,
+                "chunks": chunk_list,
+                "provider_times": provider_times,
+                "fastest_provider": fastest_provider,
+                "ttfb_improvement": ttfb_improvement,
+            }
+            yield f'event: start\ndata: {_json.dumps(start_payload)}\n\n'
 
             # 3. Build context
             documents = [r["content"] for r in search_results["results"]]
