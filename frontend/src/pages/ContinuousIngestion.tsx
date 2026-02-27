@@ -14,6 +14,9 @@ export default function ContinuousIngestionPage() {
   const [chartData, setChartData] = useState<any[]>([])
   const [currentFile, setCurrentFile] = useState('')
   const [awsSimulated, setAwsSimulated] = useState(false)
+  const [ingestionSummary, setIngestionSummary] = useState<any>(null)
+  const [directoryListing, setDirectoryListing] = useState<any[]>([])
+  const [showSummary, setShowSummary] = useState(false)
 
   const { data: healthData } = useQuery({
     queryKey: ['health'],
@@ -257,6 +260,26 @@ Average TTFB:
       setMonitoringStatus(`Retrieval test failed: ${error}`)
     }
   }
+
+  const fetchIngestionSummary = async () => {
+    try {
+      const summary = await api.getIngestionSummary()
+      const listing = await api.getDirectoryListing()
+      setIngestionSummary(summary)
+      setDirectoryListing(listing.files || [])
+      setShowSummary(summary.total_files_processed > 0)
+    } catch (error) {
+      console.error('Failed to fetch ingestion summary:', error)
+    }
+  }
+
+  // Auto-fetch summary periodically when monitoring is active
+  useEffect(() => {
+    if (isMonitoring) {
+      const interval = setInterval(fetchIngestionSummary, 5000) // Every 5 seconds
+      return () => clearInterval(interval)
+    }
+  }, [isMonitoring])
 
   return (
     <div className="space-y-6">
@@ -519,6 +542,165 @@ Average TTFB:
           </div>
         </div >
       </div >
+
+      {/* Post-Ingestion Summary Section */}
+      {showSummary && ingestionSummary && (
+        <div className="space-y-6">
+          {/* Section Header */}
+          <div className="section-header">
+            <div className="flex items-center gap-3">
+              <h2 className="section-title">Ingestion Summary</h2>
+              <span className="badge badge-success">
+                <CheckCircle className="w-3 h-3" />
+                {ingestionSummary.files?.total_processed || 0} files processed
+              </span>
+            </div>
+            <p className="section-description">
+              Comprehensive metrics from completed ingestion operations
+            </p>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Files Processed */}
+            <div className="stat-card">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-ddn-red/10">
+                  <Upload className="w-4 h-4 text-ddn-red" />
+                </div>
+              </div>
+              <div className="stat-label">Files Processed</div>
+              <div className="stat-value">{ingestionSummary.files?.total_processed || 0}</div>
+              <div className="text-xs text-neutral-400 mt-1">
+                {(ingestionSummary.files?.total_size_mb || 0).toFixed(2)} MB total
+              </div>
+            </div>
+
+            {/* Chunks Created */}
+            <div className="stat-card">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-secondary">
+                  <Database className="w-4 h-4 text-neutral-500" />
+                </div>
+              </div>
+              <div className="stat-label">Chunks Created</div>
+              <div className="stat-value">{ingestionSummary.chunks?.total_created || 0}</div>
+              <div className="text-xs text-neutral-400 mt-1">
+                {(ingestionSummary.chunks?.average_per_file || 0).toFixed(1)} per file
+              </div>
+            </div>
+
+            {/* Average Processing Time */}
+            <div className="stat-card">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-secondary">
+                  <Zap className="w-4 h-4 text-neutral-500" />
+                </div>
+              </div>
+              <div className="stat-label">Avg Processing Time</div>
+              <div className="stat-value">{(ingestionSummary.timings?.avg_total_ms || 0).toFixed(0)}<span className="text-sm text-neutral-400 font-normal ml-1">ms</span></div>
+              <div className="text-xs text-neutral-400 mt-1">
+                per file
+              </div>
+            </div>
+
+            {/* Throughput */}
+            <div className="stat-card">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-secondary">
+                  <Server className="w-4 h-4 text-neutral-500" />
+                </div>
+              </div>
+              <div className="stat-label">Throughput</div>
+              <div className="stat-value">{(ingestionSummary.throughput?.chunks_per_second || 0).toFixed(1)}<span className="text-sm text-neutral-400 font-normal ml-1">ch/s</span></div>
+              <div className="text-xs text-neutral-400 mt-1">
+                {(ingestionSummary.throughput?.mb_per_second || 0).toFixed(2)} MB/s
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Breakdown */}
+          <div className="card-elevated p-6">
+            <h3 className="text-sm font-semibold text-neutral-900 mb-4">Performance Breakdown</h3>
+            <div className="space-y-3">
+              {/* Download Time */}
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-neutral-600">Download</span>
+                  <span className="font-mono font-semibold">{(ingestionSummary.timings?.avg_download_ms || 0).toFixed(0)}ms</span>
+                </div>
+                <div className="h-2 bg-surface-secondary rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-300"
+                    style={{ width: `${Math.min((ingestionSummary.timings?.avg_download_ms || 0) / (ingestionSummary.timings?.avg_total_ms || 1) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Parsing Time */}
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-neutral-600">Parsing</span>
+                  <span className="font-mono font-semibold">{(ingestionSummary.timings?.avg_parsing_ms || 0).toFixed(0)}ms</span>
+                </div>
+                <div className="h-2 bg-surface-secondary rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 transition-all duration-300"
+                    style={{ width: `${Math.min((ingestionSummary.timings?.avg_parsing_ms || 0) / (ingestionSummary.timings?.avg_total_ms || 1) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Embedding Time */}
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-neutral-600">Embedding</span>
+                  <span className="font-mono font-semibold">{(ingestionSummary.timings?.avg_embedding_ms || 0).toFixed(0)}ms</span>
+                </div>
+                <div className="h-2 bg-surface-secondary rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-ddn-red to-red-400 transition-all duration-300"
+                    style={{ width: `${Math.min((ingestionSummary.timings?.avg_embedding_ms || 0) / (ingestionSummary.timings?.avg_total_ms || 1) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Directory Listing */}
+          {directoryListing.length > 0 && (
+            <div className="card-elevated p-6">
+              <h3 className="text-sm font-semibold text-neutral-900 mb-4">Recently Processed Files</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-neutral-200">
+                      <th className="text-left py-2 px-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">Filename</th>
+                      <th className="text-right py-2 px-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">Size</th>
+                      <th className="text-right py-2 px-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">Chunks</th>
+                      <th className="text-right py-2 px-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">Processing Time</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {directoryListing.map((file, index) => (
+                      <tr key={index} className="border-b border-neutral-100 hover:bg-surface-secondary">
+                        <td className="py-3 px-3 text-neutral-900 font-medium">{file.filename}</td>
+                        <td className="py-3 px-3 text-right text-neutral-600">{file.file_size_mb} MB</td>
+                        <td className="py-3 px-3 text-right text-neutral-600">{file.chunks_created}</td>
+                        <td className="py-3 px-3 text-right text-neutral-600">{file.total_time_ms.toFixed(0)}ms</td>
+                        <td className="py-3 px-3 text-neutral-500 text-xs">
+                          {file.timestamp ? new Date(file.timestamp).toLocaleString() : 'N/A'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div >
   )
 }

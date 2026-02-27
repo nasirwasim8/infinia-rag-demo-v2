@@ -508,9 +508,9 @@ class StorageOperationMetrics:
             'success_rate': self._get_success_rate('ddn_infinia')
         }
         
-        # Get or simulate AWS metrics
+        # Get real AWS metrics if configured, otherwise return None
         if aws_configured:
-            # Real AWS metrics
+            # Real AWS metrics from actual operations
             aws_metrics = {
                 'put_ops_per_sec': self.get_ops_per_sec('PUT', 'aws'),
                 'get_ops_per_sec': self.get_ops_per_sec('GET', 'aws'),
@@ -523,34 +523,16 @@ class StorageOperationMetrics:
                 'simulated': False
             }
         else:
-            # Simulate AWS metrics based on DDN performance (35x slower)
-            ddn_put_latency = ddn_metrics['put_latency']
-            ddn_get_latency = ddn_metrics['get_latency']
-            
-            aws_metrics = {
-                'put_ops_per_sec': ddn_metrics['put_ops_per_sec'] / 35 if ddn_metrics['put_ops_per_sec'] > 0 else 0,
-                'get_ops_per_sec': ddn_metrics['get_ops_per_sec'] / 35 if ddn_metrics['get_ops_per_sec'] > 0 else 0,
-                'read_throughput_mbps': ddn_metrics['read_throughput_mbps'] / 35 if ddn_metrics['read_throughput_mbps'] > 0 else 0,
-                'write_throughput_mbps': ddn_metrics['write_throughput_mbps'] / 35 if ddn_metrics['write_throughput_mbps'] > 0 else 0,
-                'put_latency': {
-                    'p50': ddn_put_latency['p50'] * 35,
-                    'p95': ddn_put_latency['p95'] * 35,
-                    'p99': ddn_put_latency['p99'] * 35
-                },
-                'get_latency': {
-                    'p50': ddn_get_latency['p50'] * 35,
-                    'p95': ddn_get_latency['p95'] * 35,
-                    'p99': ddn_get_latency['p99'] * 35
-                },
-                'total_operations': ddn_metrics['total_operations'],  # Same count
-                'success_rate': 100.0,  # Assume perfect for simulation
-                'simulated': True
-            }
+            # NO SIMULATION: AWS metrics not available when credentials are not configured
+            aws_metrics = None
         
-        return {
-            'ddn_infinia': ddn_metrics,
-            'aws': aws_metrics
-        }
+        result = {'ddn_infinia': ddn_metrics}
+        
+        # Only include AWS metrics if configured (real data only)
+        if aws_metrics is not None:
+            result['aws'] = aws_metrics
+        
+        return result
     
     def clear(self):
         """Clear storage operation metrics."""
