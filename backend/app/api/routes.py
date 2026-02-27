@@ -331,9 +331,12 @@ async def query_rag(request: QueryRequest):
                 metadata=result['metadata']
             ))
 
-        # Rerank if enabled
+        # Rerank if enabled — run in thread pool (blocks on NVIDIA API call)
         if request.use_reranking and nvidia_reranker.is_configured and len(documents) > 1:
-            reranked = nvidia_reranker.rerank(request.query, documents, request.top_k)
+            loop = asyncio.get_event_loop()
+            reranked = await loop.run_in_executor(
+                None, nvidia_reranker.rerank, request.query, documents, request.top_k
+            )
             # Update chunks with rerank scores
             for i, item in enumerate(reranked):
                 if i < len(retrieved_chunks):
@@ -372,9 +375,13 @@ async def query_rag(request: QueryRequest):
         ]
 
         try:
-            # Measure LLM generation time
+            # LLM inference — run in thread pool to avoid blocking event loop
+            # (local Qwen3-8B GPU inference or NVIDIA API call blocks synchronously)
             llm_start = time.perf_counter()
-            llm_response = nvidia_llm.chat_completion(messages, model=request.model)
+            loop = asyncio.get_event_loop()
+            llm_response = await loop.run_in_executor(
+                None, lambda: nvidia_llm.chat_completion(messages, model=request.model)
+            )
             llm_time_ms = (time.perf_counter() - llm_start) * 1000
             response_text = llm_response['choices'][0]['message']['content']
 
