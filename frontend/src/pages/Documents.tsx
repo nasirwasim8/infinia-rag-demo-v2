@@ -86,6 +86,7 @@ interface IngestionProgress {
   pct: number
   embeddings_per_sec: number
   embedding_device: string
+  embedding_time_ms?: number
   providers: Record<string, { latency_ms: number; success: boolean }>
   done?: boolean
 }
@@ -174,19 +175,21 @@ function IngestionPanel({ progress }: { progress: IngestionProgress }) {
           <div className="text-xs text-emerald-600">avg latency</div>
         </div>
 
-        {/* S3 writes */}
-        <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-          <div className="flex items-center gap-1 mb-1 text-xs text-neutral-500">
-            <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
-            </svg>
-            <span>S3 writes</span>
+        {/* S3 writes — only show when real AWS data is present */}
+        {s3 && (
+          <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+            <div className="flex items-center gap-1 mb-1 text-xs text-neutral-500">
+              <svg className="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+              </svg>
+              <span>S3 writes</span>
+            </div>
+            <div className="text-lg font-bold font-mono text-slate-500">
+              {s3.latency_ms.toFixed(0)}ms
+            </div>
+            <div className="text-xs text-emerald-600">avg latency</div>
           </div>
-          <div className="text-lg font-bold font-mono text-slate-500">
-            {s3 ? `${s3.latency_ms.toFixed(0)}ms` : (ddn ? `${(ddn.latency_ms * 28).toFixed(0)}ms*` : '—')}
-          </div>
-          <div className="text-xs text-amber-500">{s3 ? 'avg latency' : 'est. (simulated)'}</div>
-        </div>
+        )}
       </div>
     </div>
   )
@@ -269,7 +272,28 @@ export default function DocumentsPage() {
                   if (etype === 'progress') {
                     setIngestionProgress(payload)
                   } else if (etype === 'done') {
-                    setIngestionProgress({ ...payload, done: true })
+                    const final: IngestionProgress = { ...payload, done: true }
+                    setIngestionProgress(final)
+                    // Build the real Processing Complete summary using SSE done data
+                    const chunksDone: number = final.chunks_done || final.chunks_total || 0
+                    const embMs: number = final.embedding_time_ms || 0
+                    const isGpu = final.embedding_device === 'cuda'
+                    const ddn = final.providers?.ddn_infinia
+                    const s3 = final.providers?.aws
+                    const ddnMs = ddn?.latency_ms ?? 0
+                    const s3Ms = s3?.latency_ms ?? 0
+                    const speedupTxt = ddnMs > 0 && s3Ms > 0
+                      ? `${(s3Ms / ddnMs).toFixed(1)}x faster than S3`
+                      : 'DDN INFINIA'
+                    const embSection = embMs > 0
+                      ? `\n  Device: ${isGpu ? 'GPU (CUDA)' : 'CPU'}\n  Total embed time: ${embMs.toFixed(0)}ms\n  Chunks/sec: ${((chunksDone / embMs) * 1000).toFixed(0)}`
+                      : ''
+                    const s3Line = s3 ? `\n  • AWS S3: ${s3Ms.toFixed(1)}ms avg latency` : ''
+                    const perfSection = ddn ? `\n\nStorage Performance:\n  • DDN INFINIA: ${ddnMs.toFixed(1)}ms avg latency${s3Line}${ddnMs > 0 && s3Ms > 0 ? `\n  • Speedup: ${speedupTxt}` : ''}` : ''
+                    const summary = `Processing Complete\n==================\nFiles Processed: 1\nSuccessful: 1\nTotal Chunks: ${chunksDone}\n\nPerformance Summary:\n- ${files[0]?.name || 'file'}: ${chunksDone} chunks${perfSection}\n\nEmbedding Performance (${isGpu ? 'GPU — CUDA Accelerated' : 'CPU'}):${embSection}`.trim()
+                    setProcessingResults(summary)
+                    setUploadedFiles(prev => [...prev, files[0]?.name || 'file'])
+                    toast.success('Processing complete')
                     queryClient.invalidateQueries({ queryKey: ['documentCount'] })
                     queryClient.invalidateQueries({ queryKey: ['health'] })
                   }
@@ -286,7 +310,7 @@ export default function DocumentsPage() {
       if (remaining.length > 0) {
         return uploadMultipleDocuments(remaining)
       }
-      return { data: { results: [{ filename: files[0].name, success: true, chunks: 0, aws_simulated: false }] } }
+      return { data: { results: [] as any[] } }  // onSuccess handled via SSE done
     },
     onSuccess: (res) => {
       const successful = res.data.results.filter((r: any) => r.success)
