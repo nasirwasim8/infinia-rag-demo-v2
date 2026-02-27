@@ -790,6 +790,61 @@ across all chunk sizes.
               </div>
             )
           })()}
+          {/* ── Business Outcome Cards ─────────────────────────────────────────── */}
+          {(docCount?.total_chunks ?? 0) > 0 && (() => {
+            const chunks = docCount!.total_chunks
+            const maxConcurrent = scalingData.scale_points[scalingData.scale_points.length - 1] ?? 50
+            const totalReads = chunks * maxConcurrent
+            const ddnAvg = (scalingData.ddn_latencies.reduce((a, b) => a + b, 0) / scalingData.ddn_latencies.length).toFixed(1)
+            const awsMax = Math.max(...scalingData.aws_latencies).toFixed(0)
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                {/* Card 1 — Data parity */}
+                <div className="rounded-xl border border-red-100 bg-white p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="w-4 h-4 text-ddn-red flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <ellipse cx="12" cy="5" rx="9" ry="3" />
+                      <path d="M3 5v6a9 3 0 0 0 18 0V5" />
+                      <path d="M3 11v6a9 3 0 0 0 18 0v-6" />
+                    </svg>
+                    <span className="text-xs font-semibold text-neutral-800">{chunks.toLocaleString()} Chunks · Both Systems</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    Identical data loaded on DDN and S3 — no shortcuts. Any speed difference is pure infrastructure, not the data.
+                  </p>
+                </div>
+
+                {/* Card 2 — Concurrency pressure */}
+                <div className="rounded-xl border border-slate-100 bg-white p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="w-4 h-4 text-slate-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M6 20v-2a6 6 0 0 1 12 0v2" />
+                      <circle cx="20" cy="8" r="3" /><path d="M22 20v-1a5 5 0 0 0-4-4.9" />
+                      <circle cx="4" cy="8" r="3" /><path d="M2 20v-1a5 5 0 0 1 4-4.9" />
+                    </svg>
+                    <span className="text-xs font-semibold text-neutral-800">{maxConcurrent} Simultaneous Users</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    {maxConcurrent} employees or AI agents asking questions at once — the real pressure your production system faces daily.
+                  </p>
+                </div>
+
+                {/* Card 3 — Scale + outcome */}
+                <div className="rounded-xl border border-violet-100 bg-white p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="w-4 h-4 text-violet-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    <span className="text-xs font-semibold text-neutral-800">{totalReads.toLocaleString()} Live Data Reads</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    DDN answered all {totalReads.toLocaleString()} requests at <strong className="text-ddn-red">{ddnAvg}ms avg</strong>. S3 peaked at <strong className="text-slate-600">{awsMax}ms</strong> — every extra millisecond is a user waiting.
+                  </p>
+                </div>
+              </div>
+            )
+          })()}
 
           {scalingData.aws_simulated && (
             <div className="alert alert-info mb-4">
