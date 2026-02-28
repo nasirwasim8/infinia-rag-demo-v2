@@ -961,7 +961,7 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
             }}
           >
             {/* Header */}
-            <div className="flex items-start gap-3 mb-5">
+            <div className="flex items-start gap-3 mb-6">
               <div className="flex-shrink-0 mt-0.5">
                 <svg className="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <circle cx="12" cy="12" r="10" />
@@ -970,73 +970,42 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
                 </svg>
               </div>
               <div>
-                <h4 className="text-base font-bold mb-0.5" style={{ color: 'var(--text-primary)' }}>
-                  About This Benchmark
+                <h4 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                  Co-located Storage vs Cloud Storage — About This Benchmark
                 </h4>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                   How the test is configured and what it actually measures
                 </p>
               </div>
             </div>
 
-            {/* Two-column layout */}
-            <div className="grid md:grid-cols-2 gap-4 mb-5">
-              {/* DDN side */}
-              <div className="rounded-xl p-4" style={{ background: 'rgba(237,39,56,0.05)', border: '1px solid rgba(237,39,56,0.15)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-ddn-red flex-shrink-0" />
-                  <span className="text-sm font-bold text-ddn-red">DDN INFINIA</span>
-                </div>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  Deployed <strong style={{ color: 'var(--text-primary)' }}>co-located with the application compute</strong> — storage
-                  and AI workloads share the same high-speed fabric. Whether running on a
-                  data-center server or a Supermicro HyperPOD cluster, INFINIA is
-                  purpose-built to sit next to GPU compute. GET requests travel over a local
-                  high-bandwidth network with sub-millisecond overhead.
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* What the test measures */}
+              <div className="rounded-xl p-5" style={{ background: 'rgba(118,185,0,0.04)', border: '1px solid rgba(118,185,0,0.15)' }}>
+                <p className="text-sm font-bold text-nvidia-green mb-3">What this test measures</p>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  The benchmark measures <strong style={{ color: 'var(--text-primary)' }}>end-to-end GET latency from the application server</strong> to
+                  each storage provider under increasing concurrent load — 50, 200, and 500 simultaneous readers.
+                  Every request retrieves real document chunks: same content, same size, from both
+                  providers simultaneously. <strong style={{ color: 'var(--text-primary)' }}>The test is not simulated.</strong>
                 </p>
               </div>
 
-              {/* S3 side */}
-              <div className="rounded-xl p-4" style={{ background: 'rgba(255,153,0,0.05)', border: '1px solid rgba(255,153,0,0.15)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-orange-400 flex-shrink-0" />
-                  <span className="text-sm font-bold text-orange-400">Traditional Cloud Storage</span>
-                </div>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  Accessed as a <strong style={{ color: 'var(--text-primary)' }}>remote cloud API</strong> — the standard
-                  deployment model when using object storage from a public cloud provider.
-                  Each GET request traverses the public internet, API authentication
-                  layer, and cross-region network. This reflects how most organizations
-                  actually use cloud storage today.
+              {/* The honest framing */}
+              <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)' }}>
+                <p className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>The architecture choice being tested</p>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                  This reflects a real infrastructure decision: <em>should AI storage live next to compute, or live in the cloud?</em>{' '}
+                  DDN INFINIA is co-located by design — that is its recommendation for AI workloads across any
+                  deployment. The performance gap is the measurable consequence of that architectural choice.
+                  Absolute latency numbers vary by environment; the{' '}
+                  <strong style={{ color: 'var(--text-secondary)' }}>latency curve behavior under concurrency</strong> —
+                  DDN staying flat while cloud storage degrades — is consistent.
                 </p>
               </div>
-            </div>
-
-            {/* What the test measures */}
-            <div className="rounded-xl p-4 mb-4" style={{ background: 'rgba(118,185,0,0.04)', border: '1px solid rgba(118,185,0,0.12)' }}>
-              <p className="text-xs font-bold text-nvidia-green mb-2">What this test measures</p>
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                The benchmark measures <strong style={{ color: 'var(--text-primary)' }}>end-to-end GET latency from the application server</strong> to
-                each storage provider under increasing concurrent load (50 → 200 → 500 simultaneous readers).
-                Every request retrieves real document chunks — the same content, same size — from both
-                providers simultaneously. The test is not simulated.
-              </p>
-            </div>
-
-            {/* The honest framing */}
-            <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)' }}>
-              <p className="text-xs font-bold mb-2" style={{ color: 'var(--text-primary)' }}>The architecture choice being tested</p>
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                This comparison reflects a real infrastructure decision teams face: <em>should AI storage
-                  live next to compute, or live in the cloud?</em> DDN INFINIA is co-located by design —
-                that is its architectural recommendation for AI workloads and the configuration used in
-                production deployments. The performance gap you observe is the measurable consequence of
-                that architectural choice, not a laboratory trick. Latency numbers will vary by
-                deployment environment; the <strong style={{ color: 'var(--text-secondary)' }}>latency curve behavior under concurrency</strong> — DDN
-                staying flat while cloud storage degrades — is consistent across deployments.
-              </p>
             </div>
           </div>
+
 
         </div>
       </section >
