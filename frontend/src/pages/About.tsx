@@ -106,9 +106,11 @@ function GtcOutcomesSection({ onStartDemo }: { onStartDemo?: () => void }) {
             This demo is a <strong>calibrated, live micro-benchmark</strong> — run the Scaling Test at{' '}
             <strong>50, 200, or 500 concurrent GET requests</strong> and watch DDN INFINIA hold flat
             latency in real time while S3 visibly degrades under increasing load. Every number on this
-            page is <strong>measured, not modelled</strong>. The three cards below take those live
+            page is <strong>measured, not modelled</strong>. DDN INFINIA runs co-located with the
+            application compute; traditional cloud storage is accessed as a remote API — that is the
+            real-world architecture choice this benchmark tests. The three cards below take those live
             read-latency results and extrapolate them to hyperscaler volumes — so when any
-            hyperscaler or enterprise AI team asks <em>"what does this mean at our scale?"</em> every
+            enterprise AI team asks <em>"what does this mean at our scale?"</em> every
             answer is backed by data you just ran yourself.
           </p>
         </div>
