@@ -103,7 +103,7 @@ function GtcOutcomesSection({ onStartDemo }: { onStartDemo?: () => void }) {
           <span className="eyebrow text-ddn-red block">Strategic Value Framework</span>
           <h2 className="heading-2 mt-2 mb-3">End-to-End RAG Pipeline — Business Case</h2>
           <p className="body-text max-w-3xl mx-auto">
-            This demo is a <strong>calibrated, live micro-benchmark</strong> — run the Scaling Test at{' '}
+            This demo is a <strong>controlled, live load test</strong> — run the Scaling Test at{' '}
             <strong>50, 200, or 500 concurrent GET requests</strong> and watch DDN INFINIA hold flat
             latency in real time while S3 visibly degrades under increasing load. Every number on this
             page is <strong>measured, not modelled</strong>. DDN INFINIA runs co-located with the
