@@ -994,7 +994,7 @@ export default function AboutPage({ onStartDemo }: AboutPageProps) {
               {/* The honest framing */}
               <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)' }}>
                 <p className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>The architecture choice being tested</p>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                   This reflects a real infrastructure decision: <em>should AI storage live next to compute, or live in the cloud?</em>{' '}
                   DDN INFINIA is co-located by design — that is its recommendation for AI workloads across any
                   deployment. The performance gap is the measurable consequence of that architectural choice.
