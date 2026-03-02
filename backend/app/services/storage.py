@@ -54,7 +54,8 @@ class S3Handler:
                         aws_secret_access_key=self.config['secret_key'],
                         endpoint_url=endpoint_url,
                         region_name=self.config['region'],
-                        config=boto_config
+                        config=boto_config,
+                        verify=False  # OCI and other S3-compatible endpoints may use self-signed/untrusted certs
                     )
                 else:
                     # Standard AWS S3
