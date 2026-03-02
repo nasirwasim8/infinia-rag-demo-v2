@@ -115,7 +115,7 @@ class S3Handler:
 
         try:
             bucket_name = self.config['bucket_name']
-            self.client.put_object(Bucket=bucket_name, Key=object_key, Body=data_bytes)
+            self.client.put_object(Bucket=bucket_name, Key=object_key, Body=data_bytes, ContentLength=len(data_bytes))
             return True, f"Successfully uploaded to {self.config['provider']}"
         except Exception as e:
             return False, f"Upload error: {e}"
