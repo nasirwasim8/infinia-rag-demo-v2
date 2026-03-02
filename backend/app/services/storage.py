@@ -2,6 +2,7 @@
 Storage service for AWS S3 and DDN INFINIA.
 Handles all object storage operations with both providers.
 """
+import io
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
@@ -115,7 +116,14 @@ class S3Handler:
 
         try:
             bucket_name = self.config['bucket_name']
-            self.client.put_object(Bucket=bucket_name, Key=object_key, Body=data_bytes, ContentLength=len(data_bytes))
+            # Wrap in BytesIO to prevent boto3 chunked transfer encoding
+            # (OCI S3-compatible API requires explicit Content-Length; chunked encoding strips it)
+            self.client.put_object(
+                Bucket=bucket_name,
+                Key=object_key,
+                Body=io.BytesIO(data_bytes),
+                ContentLength=len(data_bytes)
+            )
             return True, f"Successfully uploaded to {self.config['provider']}"
         except Exception as e:
             return False, f"Upload error: {e}"
