@@ -44,9 +44,14 @@ class S3Handler:
                     # NOTE: Do NOT set addressing_style='path' here — OCI's S3-compatible API
                     # requires virtual-hosted style (default). Path style causes boto3 to send
                     # chunked Transfer-Encoding which OCI rejects with MissingContentLength.
+                    # NOTE: botocore 1.36+ enables automatic checksum calculation by default,
+                    # which also triggers chunked Transfer-Encoding. OCI doesn't support this,
+                    # so we disable it with request_checksum_calculation='when_required'.
                     print(f"DEBUG: Initializing S3-compatible client (endpoint: {endpoint_url})...")
                     boto_config = Config(
                         signature_version='s3v4',
+                        request_checksum_calculation='when_required',   # OCI fix: disable auto-checksum chunked encoding
+                        response_checksum_validation='when_required',   # OCI fix: disable auto-validation
                         retries={'max_attempts': 3},
                         connect_timeout=60,
                         read_timeout=60
