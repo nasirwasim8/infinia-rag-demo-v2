@@ -41,10 +41,12 @@ class S3Handler:
 
                 if endpoint_url:
                     # S3-Compatible mode: OCI Object Storage, MinIO, Wasabi, etc.
+                    # NOTE: Do NOT set addressing_style='path' here — OCI's S3-compatible API
+                    # requires virtual-hosted style (default). Path style causes boto3 to send
+                    # chunked Transfer-Encoding which OCI rejects with MissingContentLength.
                     print(f"DEBUG: Initializing S3-compatible client (endpoint: {endpoint_url})...")
                     boto_config = Config(
                         signature_version='s3v4',
-                        s3={'addressing_style': 'path'},
                         retries={'max_attempts': 3},
                         connect_timeout=60,
                         read_timeout=60
@@ -116,13 +118,10 @@ class S3Handler:
 
         try:
             bucket_name = self.config['bucket_name']
-            # Wrap in BytesIO to prevent boto3 chunked transfer encoding
-            # (OCI S3-compatible API requires explicit Content-Length; chunked encoding strips it)
             self.client.put_object(
                 Bucket=bucket_name,
                 Key=object_key,
-                Body=io.BytesIO(data_bytes),
-                ContentLength=len(data_bytes)
+                Body=data_bytes
             )
             return True, f"Successfully uploaded to {self.config['provider']}"
         except Exception as e:
